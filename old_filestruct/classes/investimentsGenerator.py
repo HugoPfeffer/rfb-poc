@@ -18,13 +18,7 @@ class InvestmentsGenerator:
         self.mean_return = mean_return
         self.std_dev = std_dev
         self.sample_size = sample_size
-        # Add sectors data
-        self.sectors = [
-            {"setor_id": 1, "setor_nome": "Tecnologia da Informação"},
-            {"setor_id": 2, "setor_nome": "Saúde"},
-            {"setor_id": 3, "setor_nome": "Finanças"},
-            # Add more sectors as needed
-        ]
+
         
     def generate_basic_returns(self):
         """Generate basic synthetic returns using normal distribution."""
@@ -45,7 +39,13 @@ class InvestmentsGenerator:
     def generate_with_crisis(self, crisis_prob=0.1):
         """
         Generate returns with varying volatility to simulate crisis periods.
-        Returns a DataFrame with sector information and returns.
+        Returns a DataFrame with returns.
+        
+        Args:
+            crisis_prob (float): Probability of crisis periods (default: 0.1)
+        
+        Returns:
+            pd.DataFrame: DataFrame containing the generated returns
         """
         returns = np.random.normal(
             loc=self.mean_return, 
@@ -56,9 +56,8 @@ class InvestmentsGenerator:
             )
         )
         
-        # Create DataFrame with sectors and returns
-        df = pd.DataFrame(self.sectors)
-        df['returns'] = returns[:len(self.sectors)]  # Trim returns to match sectors length
+        # Create DataFrame with returns
+        df = pd.DataFrame({'returns': returns})
         return df
 
 

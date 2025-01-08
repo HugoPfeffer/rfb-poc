@@ -234,14 +234,26 @@ class SalaryGenerator:
         """
         data = []
         for _, row in self.sectors_df.iterrows():
-            entry_level = np.random.randint(row['Entry_Min'], row['Entry_Max'], num_samples)
-            mid_career = np.random.randint(row['Mid_Min'], row['Mid_Max'], num_samples)
-            senior_level = np.random.randint(row['Senior_Min'], row['Senior_Max'], num_samples)
-
-            for i in range(num_samples):
-                data.append({"Sector": row['Setor'], "Level": "Entry", "Salary": entry_level[i]})
-                data.append({"Sector": row['Setor'], "Level": "Mid", "Salary": mid_career[i]})
-                data.append({"Sector": row['Setor'], "Level": "Senior", "Salary": senior_level[i]})
+            data.extend([
+                {
+                    "setor": row['Setor'],
+                    "nivel": "junior",
+                    "min_salary": row['Entry_Min'],
+                    "max_salary": row['Entry_Max']
+                },
+                {
+                    "setor": row['Setor'],
+                    "nivel": "pleno",
+                    "min_salary": row['Mid_Min'],
+                    "max_salary": row['Mid_Max']
+                },
+                {
+                    "setor": row['Setor'],
+                    "nivel": "senior",
+                    "min_salary": row['Senior_Min'],
+                    "max_salary": row['Senior_Max']
+                }
+            ])
         return pd.DataFrame(data)
 
     def generate_sample_dataset(self, num_samples_per_sector=100):

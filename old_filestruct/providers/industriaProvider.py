@@ -6,23 +6,16 @@ from classes.investimentsGenerator import InvestmentsGenerator
 
 class industriaProvider(BaseProvider):
     salary_gen = SalaryGenerator()  # Class-level instance
-    investments_gen = InvestmentsGenerator()  # Class-level instance
 
     def __init__(self, generator):
         super().__init__(generator)
-        # Load the dataframes using class-level instances
-        self.salary_df = self.salary_gen.generate_salaries()  # should use default num_samples=10
-        self.investments_df = self.investments_gen.generate_with_crisis()
-        
-        # Create setores dictionary from investments dataframe
-        self.setores = dict(zip(
-            self.investments_df['setor_id'], 
-            self.investments_df['setor_nome']
-        ))
+        self.salary_df = self.salary_gen.generate_salaries()
+        # Get unique sectors from the salary generator
+        self.setores = self.salary_gen.sectors_df['Setor'].unique()
 
-    def industria(self) -> str:
-        """Returns a random industry from the investments dataframe"""
-        return random.choice(self.investments_df['setor_nome'].tolist())
+    def industria(self):
+        """Returns a random industry sector"""
+        return random.choice(self.setores)
 
     def range_salarial(self, setor: str = None, nivel: str = None) -> int:
         """

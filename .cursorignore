@@ -1,0 +1,9 @@
+# Add directories or file patterns to ignore during indexing (e.g. foo/ or *.csv)
+.venv/
+.venv/*
+.venv*
+__pycache__/
+testing_ignored/*
+testing_ignored/
+old_filestruct/*
+old_filestruct/
