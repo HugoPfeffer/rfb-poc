@@ -5,64 +5,242 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 # %%
-# Define base salary ranges for each sector
-sectors = {
-    "Tecnologia da Informação": [50000, 70000, 84000, 105000, 136500, 210000],
-    "Saúde": [40000, 56000, 67200, 84000, 109200, 168000],
-    "Educação": [30000, 42000, 50400, 63000, 81900, 126000],
-    "Finanças": [50000, 70000, 84000, 105000, 136500, 210000],
-    "Varejo": [25000, 35000, 42000, 52500, 68250, 105000],
-    "Indústria Manufatureira": [30000, 42000, 50400, 63000, 81900, 126000],
-    "Construção Civil": [35000, 49000, 58800, 73500, 95550, 147000],
-    "Agricultura": [20000, 28000, 33600, 42000, 54600, 84000],
-    "Transporte e Logística": [25000, 35000, 42000, 52500, 68250, 105000],
-    "Telecomunicações": [40000, 56000, 67200, 84000, 109200, 168000],
-    "Energia": [45000, 63000, 75600, 94500, 122850, 189000],
-    "Mídia e Entretenimento": [30000, 42000, 50400, 63000, 81900, 126000],
-    "Hotelaria e Turismo": [20000, 28000, 33600, 42000, 54600, 84000],
-    "Serviços Jurídicos": [40000, 56000, 67200, 84000, 109200, 168000],
-    "Recursos Humanos": [30000, 42000, 50400, 63000, 81900, 126000],
-    "Marketing e Publicidade": [30000, 42000, 50400, 63000, 81900, 126000],
-    "Pesquisa e Desenvolvimento": [40000, 56000, 67200, 84000, 109200, 168000],
-    "Farmacêutica": [45000, 63000, 75600, 94500, 122850, 189000],
-    "Automotivo": [35000, 49000, 58800, 73500, 95550, 147000],
-    "Alimentação e Bebidas": [25000, 35000, 42000, 52500, 68250, 105000],
-    "Consultoria Empresarial": [50000, 70000, 84000, 105000, 136500, 210000],
-    "Seguros": [40000, 56000, 67200, 84000, 109200, 168000],
-    "Imobiliário": [35000, 49000, 58800, 73500, 95550, 147000],
-    "Mineração": [40000, 56000, 67200, 84000, 109200, 168000],
-    "Petróleo e Gás": [50000, 70000, 84000, 105000, 136500, 210000],
-    "Serviços Ambientais": [30000, 42000, 50400, 63000, 81900, 126000],
-    "Aeroespacial": [45000, 63000, 75600, 94500, 122850, 189000],
-    "Biotecnologia": [40000, 56000, 67200, 84000, 109200, 168000],
-    "Comércio Exterior": [35000, 49000, 58800, 73500, 95550, 147000],
-    "Serviços Financeiros": [50000, 70000, 84000, 105000, 136500, 210000],
-    "Administração Pública": [25000, 35000, 42000, 52500, 68250, 105000],
-    "Organizações Sem Fins Lucrativos": [20000, 28000, 33600, 42000, 54600, 84000],
-    "Esportes e Recreação": [20000, 28000, 33600, 42000, 54600, 84000],
-    "Artes e Cultura": [20000, 28000, 33600, 42000, 54600, 84000],
-    "Segurança e Vigilância": [25000, 35000, 42000, 52500, 68250, 105000],
-}
+# Create sectors data as a list of dictionaries
+sectors_data = [
+    {
+        'Setor': "Tecnologia da Informação",
+        'Entry_Min': 50000, 'Entry_Max': 70000,
+        'Mid_Min': 84000, 'Mid_Max': 105000,
+        'Senior_Min': 136500, 'Senior_Max': 210000
+    },
+    {
+        'Setor': "Saúde",
+        'Entry_Min': 40000, 'Entry_Max': 56000,
+        'Mid_Min': 67200, 'Mid_Max': 84000,
+        'Senior_Min': 109200, 'Senior_Max': 168000
+    },
+    {
+        'Setor': "Educação",
+        'Entry_Min': 30000, 'Entry_Max': 42000,
+        'Mid_Min': 50400, 'Mid_Max': 63000,
+        'Senior_Min': 81900, 'Senior_Max': 126000
+    },
+    {
+        'Setor': "Finanças",
+        'Entry_Min': 50000, 'Entry_Max': 70000,
+        'Mid_Min': 84000, 'Mid_Max': 105000,
+        'Senior_Min': 136500, 'Senior_Max': 210000
+    },
+    {
+        'Setor': "Varejo",
+        'Entry_Min': 25000, 'Entry_Max': 35000,
+        'Mid_Min': 42000, 'Mid_Max': 52500,
+        'Senior_Min': 68250, 'Senior_Max': 105000
+    },
+    {
+        'Setor': "Indústria Manufatureira",
+        'Entry_Min': 30000, 'Entry_Max': 42000,
+        'Mid_Min': 50400, 'Mid_Max': 63000,
+        'Senior_Min': 81900, 'Senior_Max': 126000
+    },
+    {
+        'Setor': "Construção Civil",
+        'Entry_Min': 35000, 'Entry_Max': 49000,
+        'Mid_Min': 58800, 'Mid_Max': 73500,
+        'Senior_Min': 95550, 'Senior_Max': 147000
+    },
+    {
+        'Setor': "Agricultura",
+        'Entry_Min': 20000, 'Entry_Max': 28000,
+        'Mid_Min': 33600, 'Mid_Max': 42000,
+        'Senior_Min': 54600, 'Senior_Max': 84000
+    },
+    {
+        'Setor': "Transporte e Logística",
+        'Entry_Min': 25000, 'Entry_Max': 35000,
+        'Mid_Min': 42000, 'Mid_Max': 52500,
+        'Senior_Min': 68250, 'Senior_Max': 105000
+    },
+    {
+        'Setor': "Telecomunicações",
+        'Entry_Min': 40000, 'Entry_Max': 56000,
+        'Mid_Min': 67200, 'Mid_Max': 84000,
+        'Senior_Min': 109200, 'Senior_Max': 168000
+    },
+    {
+        'Setor': "Energia",
+        'Entry_Min': 45000, 'Entry_Max': 63000,
+        'Mid_Min': 75600, 'Mid_Max': 94500,
+        'Senior_Min': 122850, 'Senior_Max': 189000
+    },
+    {
+        'Setor': "Mídia e Entretenimento",
+        'Entry_Min': 30000, 'Entry_Max': 42000,
+        'Mid_Min': 50400, 'Mid_Max': 63000,
+        'Senior_Min': 81900, 'Senior_Max': 126000
+    },
+    {
+        'Setor': "Hotelaria e Turismo",
+        'Entry_Min': 20000, 'Entry_Max': 28000,
+        'Mid_Min': 33600, 'Mid_Max': 42000,
+        'Senior_Min': 54600, 'Senior_Max': 84000
+    },
+    {
+        'Setor': "Serviços Jurídicos",
+        'Entry_Min': 40000, 'Entry_Max': 56000,
+        'Mid_Min': 67200, 'Mid_Max': 84000,
+        'Senior_Min': 109200, 'Senior_Max': 168000
+    },
+    {
+        'Setor': "Recursos Humanos",
+        'Entry_Min': 30000, 'Entry_Max': 42000,
+        'Mid_Min': 50400, 'Mid_Max': 63000,
+        'Senior_Min': 81900, 'Senior_Max': 126000
+    },
+    {
+        'Setor': "Marketing e Publicidade",
+        'Entry_Min': 30000, 'Entry_Max': 42000,
+        'Mid_Min': 50400, 'Mid_Max': 63000,
+        'Senior_Min': 81900, 'Senior_Max': 126000
+    },
+    {
+        'Setor': "Pesquisa e Desenvolvimento",
+        'Entry_Min': 40000, 'Entry_Max': 56000,
+        'Mid_Min': 67200, 'Mid_Max': 84000,
+        'Senior_Min': 109200, 'Senior_Max': 168000
+    },
+    {
+        'Setor': "Farmacêutica",
+        'Entry_Min': 45000, 'Entry_Max': 63000,
+        'Mid_Min': 75600, 'Mid_Max': 94500,
+        'Senior_Min': 122850, 'Senior_Max': 189000
+    },
+    {
+        'Setor': "Automotivo",
+        'Entry_Min': 35000, 'Entry_Max': 49000,
+        'Mid_Min': 58800, 'Mid_Max': 73500,
+        'Senior_Min': 95550, 'Senior_Max': 147000
+    },
+    {
+        'Setor': "Alimentação e Bebidas",
+        'Entry_Min': 25000, 'Entry_Max': 35000,
+        'Mid_Min': 42000, 'Mid_Max': 52500,
+        'Senior_Min': 68250, 'Senior_Max': 105000
+    },
+    {
+        'Setor': "Consultoria Empresarial",
+        'Entry_Min': 50000, 'Entry_Max': 70000,
+        'Mid_Min': 84000, 'Mid_Max': 105000,
+        'Senior_Min': 136500, 'Senior_Max': 210000
+    },
+    {
+        'Setor': "Seguros",
+        'Entry_Min': 40000, 'Entry_Max': 56000,
+        'Mid_Min': 67200, 'Mid_Max': 84000,
+        'Senior_Min': 109200, 'Senior_Max': 168000
+    },
+    {
+        'Setor': "Imobiliário",
+        'Entry_Min': 35000, 'Entry_Max': 49000,
+        'Mid_Min': 58800, 'Mid_Max': 73500,
+        'Senior_Min': 95550, 'Senior_Max': 147000
+    },
+    {
+        'Setor': "Mineração",
+        'Entry_Min': 40000, 'Entry_Max': 56000,
+        'Mid_Min': 67200, 'Mid_Max': 84000,
+        'Senior_Min': 109200, 'Senior_Max': 168000
+    },
+    {
+        'Setor': "Petróleo e Gás",
+        'Entry_Min': 50000, 'Entry_Max': 70000,
+        'Mid_Min': 84000, 'Mid_Max': 105000,
+        'Senior_Min': 136500, 'Senior_Max': 210000
+    },
+    {
+        'Setor': "Serviços Ambientais",
+        'Entry_Min': 30000, 'Entry_Max': 42000,
+        'Mid_Min': 50400, 'Mid_Max': 63000,
+        'Senior_Min': 81900, 'Senior_Max': 126000
+    },
+    {
+        'Setor': "Aeroespacial",
+        'Entry_Min': 45000, 'Entry_Max': 63000,
+        'Mid_Min': 75600, 'Mid_Max': 94500,
+        'Senior_Min': 122850, 'Senior_Max': 189000
+    },
+    {
+        'Setor': "Biotecnologia",
+        'Entry_Min': 40000, 'Entry_Max': 56000,
+        'Mid_Min': 67200, 'Mid_Max': 84000,
+        'Senior_Min': 109200, 'Senior_Max': 168000
+    },
+    {
+        'Setor': "Comércio Exterior",
+        'Entry_Min': 35000, 'Entry_Max': 49000,
+        'Mid_Min': 58800, 'Mid_Max': 73500,
+        'Senior_Min': 95550, 'Senior_Max': 147000
+    },
+    {
+        'Setor': "Serviços Financeiros",
+        'Entry_Min': 50000, 'Entry_Max': 70000,
+        'Mid_Min': 84000, 'Mid_Max': 105000,
+        'Senior_Min': 136500, 'Senior_Max': 210000
+    },
+    {
+        'Setor': "Administração Pública",
+        'Entry_Min': 25000, 'Entry_Max': 35000,
+        'Mid_Min': 42000, 'Mid_Max': 52500,
+        'Senior_Min': 68250, 'Senior_Max': 105000
+    },
+    {
+        'Setor': "Organizações Sem Fins Lucrativos",
+        'Entry_Min': 20000, 'Entry_Max': 28000,
+        'Mid_Min': 33600, 'Mid_Max': 42000,
+        'Senior_Min': 54600, 'Senior_Max': 84000
+    },
+    {
+        'Setor': "Esportes e Recreação",
+        'Entry_Min': 20000, 'Entry_Max': 28000,
+        'Mid_Min': 33600, 'Mid_Max': 42000,
+        'Senior_Min': 54600, 'Senior_Max': 84000
+    },
+    {
+        'Setor': "Artes e Cultura",
+        'Entry_Min': 20000, 'Entry_Max': 28000,
+        'Mid_Min': 33600, 'Mid_Max': 42000,
+        'Senior_Min': 54600, 'Senior_Max': 84000
+    },
+    {
+        'Setor': "Segurança e Vigilância",
+        'Entry_Min': 25000, 'Entry_Max': 35000,
+        'Mid_Min': 42000, 'Mid_Max': 52500,
+        'Senior_Min': 68250, 'Senior_Max': 105000
+    }
+]
+
+# Convert directly to DataFrame
+sectors_df = pd.DataFrame(sectors_data)
 
 # %%
-# Function to generate salaries for each sector
-def generate_salaries(sector_ranges, num_samples):
+# Updated function to generate salaries using DataFrame
+def generate_salaries(sectors_df, num_samples):
     data = []
-    for sector, ranges in sector_ranges.items():
-        entry_level = np.random.randint(ranges[0], ranges[1], num_samples)
-        mid_career = np.random.randint(ranges[2], ranges[3], num_samples)
-        senior_level = np.random.randint(ranges[4], ranges[5], num_samples)
+    for _, row in sectors_df.iterrows():
+        entry_level = np.random.randint(row['Entry_Min'], row['Entry_Max'], num_samples)
+        mid_career = np.random.randint(row['Mid_Min'], row['Mid_Max'], num_samples)
+        senior_level = np.random.randint(row['Senior_Min'], row['Senior_Max'], num_samples)
 
         for i in range(num_samples):
-            data.append({"Sector": sector, "Level": "Entry", "Salary": entry_level[i]})
-            data.append({"Sector": sector, "Level": "Mid", "Salary": mid_career[i]})
-            data.append({"Sector": sector, "Level": "Senior", "Salary": senior_level[i]})
+            data.append({"Sector": row['Setor'], "Level": "Entry", "Salary": entry_level[i]})
+            data.append({"Sector": row['Setor'], "Level": "Mid", "Salary": mid_career[i]})
+            data.append({"Sector": row['Setor'], "Level": "Senior", "Salary": senior_level[i]})
     return pd.DataFrame(data)
 
 # %%
 # Generate dataset
 num_samples_per_sector = 100
-dataset = generate_salaries(sectors, num_samples_per_sector)
+dataset = generate_salaries(sectors_df, num_samples_per_sector)
 
 
 
