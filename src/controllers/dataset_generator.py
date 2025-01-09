@@ -1,15 +1,25 @@
 from abc import ABC, abstractmethod
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, Union, List
 import pandas as pd
+import numpy as np
 from pathlib import Path
 import json
+from datetime import datetime
+import logging
+
+# Set up logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
 
 class DatasetGenerator(ABC):
     """Base class for all dataset generators.
     
     This class provides the core functionality and interface that all dataset
     generators must implement. It handles common operations like saving datasets,
-    validation, and configuration management.
+    validation, configuration management, and data preprocessing.
     """
     
     def __init__(self, config: Optional[Dict[str, Any]] = None):
@@ -21,6 +31,13 @@ class DatasetGenerator(ABC):
         self.config = config or {}
         self.data: Optional[pd.DataFrame] = None
         self._datasets: Dict[str, pd.DataFrame] = {}
+        self._metadata: Dict[str, Any] = {
+            'created_at': None,
+            'records': 0,
+            'columns': [],
+            'data_types': {},
+            'validation_status': False
+        }
         
     @abstractmethod
     def generate(self, size: int) -> pd.DataFrame:
@@ -43,28 +60,44 @@ class DatasetGenerator(ABC):
         """
         pass
     
-    @abstractmethod
-    def save(self, path: str, format: str = 'csv') -> None:
+    def save(self, path: str, format: str = 'csv', include_metadata: bool = True) -> None:
         """Save the generated dataset to disk.
-        
-        This method should be implemented by subclasses to handle specific
-        saving requirements for each type of dataset.
         
         Args:
             path: Path where to save the dataset
             format: Format to save the data in (csv, parquet, etc.)
+            include_metadata: Whether to save metadata alongside the dataset
             
         Raises:
             ValueError: If data hasn't been generated or format is unsupported
         """
-        pass
+        if self.data is None or self.data.empty:
+            raise ValueError("No data has been generated yet")
+            
+        output_path = Path(path)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        
+        # Update metadata before saving
+        self._update_metadata()
+        
+        # Save data in specified format
+        if format.lower() == 'csv':
+            self.data.to_csv(output_path, index=False)
+        elif format.lower() == 'parquet':
+            self.data.to_parquet(output_path, index=False)
+        elif format.lower() == 'json':
+            self.data.to_json(output_path, orient='records', lines=True)
+        else:
+            raise ValueError(f"Unsupported format: {format}")
+            
+        # Save metadata if requested
+        if include_metadata:
+            metadata_path = output_path.with_suffix('.metadata.json')
+            with open(metadata_path, 'w') as f:
+                json.dump(self._metadata, f, indent=2, default=str)
     
     def save_to_dataset(self, dataset_name: str) -> pd.DataFrame:
         """Store the generated data in memory and return it as a DataFrame.
-        
-        This method stores the generated data in memory for later access and
-        returns it as a DataFrame. The data can be accessed later using the
-        get_dataset method.
         
         Args:
             dataset_name: Name to identify the dataset
@@ -78,7 +111,6 @@ class DatasetGenerator(ABC):
         if self.data is None:
             raise ValueError("No data has been generated yet")
         
-        # Store the data in memory
         self._datasets[dataset_name] = self.data.copy()
         return self._datasets[dataset_name]
     
@@ -98,10 +130,8 @@ class DatasetGenerator(ABC):
             raise KeyError(f"Dataset '{dataset_name}' not found")
         return self._datasets[dataset_name]
     
-    def load_config(self, config_path: str) -> None:
+    def load_config(self, config_path: Union[str, Path]) -> None:
         """Load configuration from a JSON file.
-        
-        The config file should contain a mapping of parameters needed for data generation.
         
         Args:
             config_path: Path to the JSON configuration file
@@ -128,3 +158,68 @@ class DatasetGenerator(ABC):
             The configuration value or default if not found
         """
         return self.config.get(key, default)
+    
+    def _update_metadata(self) -> None:
+        """Update metadata about the generated dataset."""
+        if self.data is not None:
+            self._metadata.update({
+                'created_at': datetime.now(),
+                'records': len(self.data),
+                'columns': list(self.data.columns),
+                'data_types': self.data.dtypes.astype(str).to_dict(),
+                'validation_status': self.validate(),
+                'memory_usage': self.data.memory_usage(deep=True).sum(),
+                'null_counts': self.data.isnull().sum().to_dict()
+            })
+    
+    def get_metadata(self) -> Dict[str, Any]:
+        """Get metadata about the generated dataset.
+        
+        Returns:
+            Dict containing dataset metadata
+        """
+        self._update_metadata()
+        return self._metadata
+    
+    def describe_dataset(self) -> None:
+        """Print a comprehensive description of the dataset."""
+        if self.data is None:
+            logger.warning("No data has been generated yet")
+            return
+            
+        logger.info("\nDataset Description:")
+        logger.info("-" * 20)
+        
+        # Basic information
+        logger.info(f"\nRecords: {len(self.data)}")
+        logger.info(f"Columns: {list(self.data.columns)}")
+        
+        # Data types
+        logger.info("\nData Types:")
+        for col, dtype in self.data.dtypes.items():
+            logger.info(f"{col}: {dtype}")
+        
+        # Summary statistics
+        logger.info("\nSummary Statistics:")
+        print(self.data.describe())
+        
+        # Null values
+        logger.info("\nNull Values:")
+        null_counts = self.data.isnull().sum()
+        if null_counts.any():
+            print(null_counts[null_counts > 0])
+        else:
+            logger.info("No null values found")
+    
+    def sample_data(self, n: int = 5) -> pd.DataFrame:
+        """Get a random sample of the dataset.
+        
+        Args:
+            n: Number of records to sample
+            
+        Returns:
+            DataFrame containing sampled records
+        """
+        if self.data is None:
+            raise ValueError("No data has been generated yet")
+        return self.data.sample(n=min(n, len(self.data)))
