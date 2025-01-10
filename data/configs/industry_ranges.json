@@ -1,0 +1,242 @@
+[
+    {
+      "industry": "Gestão",
+      "salary_ranges": {
+        "entry": 70000,
+        "mid": 100000,
+        "senior": 131200
+      }
+    },
+    {
+      "industry": "Direito",
+      "salary_ranges": {
+        "entry": 80000,
+        "mid": 100000,
+        "senior": 124540
+      }
+    },
+    {
+      "industry": "Computação e matemática",
+      "salary_ranges": {
+        "entry": 70000,
+        "mid": 90000,
+        "senior": 108130
+      }
+    },
+    {
+      "industry": "Saúde",
+      "salary_ranges": {
+        "entry": 60000,
+        "mid": 80000,
+        "senior": 96770
+      }
+    },
+    {
+      "industry": "Engenharia e arquitetura",
+      "salary_ranges": {
+        "entry": 65000,
+        "mid": 80000,
+        "senior": 94670
+      }
+    },
+    {
+      "industry": "Ciências sociais",
+      "salary_ranges": {
+        "entry": 60000,
+        "mid": 75000,
+        "senior": 94560
+      }
+    },
+    {
+      "industry": "Negócios e finanças",
+      "salary_ranges": {
+        "entry": 55000,
+        "mid": 70000,
+        "senior": 86080
+      }
+    },
+    {
+      "industry": "Design, artes, entretenimento e esportes",
+      "salary_ranges": {
+        "entry": 45000,
+        "mid": 60000,
+        "senior": 76500
+      }
+    },
+    {
+      "industry": "Educação",
+      "salary_ranges": {
+        "entry": 40000,
+        "mid": 50000,
+        "senior": 63240
+      }
+    },
+    {
+      "industry": "Construção",
+      "salary_ranges": {
+        "entry": 35000,
+        "mid": 45000,
+        "senior": 58400
+      }
+    },
+    {
+      "industry": "Serviço social e comunidade",
+      "salary_ranges": {
+        "entry": 35000,
+        "mid": 45000,
+        "senior": 55760
+      }
+    },
+    {
+      "industry": "Manutenção e reparo",
+      "salary_ranges": {
+        "entry": 35000,
+        "mid": 45000,
+        "senior": 55680
+      }
+    },
+    {
+      "industry": "Serviços de proteção",
+      "salary_ranges": {
+        "entry": 35000,
+        "mid": 45000,
+        "senior": 54010
+      }
+    },
+    {
+      "industry": "Vendas",
+      "salary_ranges": {
+        "entry": 30000,
+        "mid": 40000,
+        "senior": 50370
+      }
+    },
+    {
+      "industry": "Suporte administrativo e de escritório",
+      "salary_ranges": {
+        "entry": 30000,
+        "mid": 37000,
+        "senior": 45550
+      }
+    },
+    {
+      "industry": "Produção",
+      "salary_ranges": {
+        "entry": 30000,
+        "mid": 37000,
+        "senior": 45370
+      }
+    },
+    {
+      "industry": "Transporte",
+      "salary_ranges": {
+        "entry": 30000,
+        "mid": 37000,
+        "senior": 43930
+      }
+    },
+    {
+      "industry": "Silvicultura, agricultura e pesca",
+      "salary_ranges": {
+        "entry": 25000,
+        "mid": 30000,
+        "senior": 37870
+      }
+    },
+    {
+      "industry": "Serviços pessoais e cuidados",
+      "salary_ranges": {
+        "entry": 25000,
+        "mid": 30000,
+        "senior": 36210
+      }
+    },
+    {
+      "industry": "Limpeza e manutenção",
+      "salary_ranges": {
+        "entry": 25000,
+        "mid": 30000,
+        "senior": 35900
+      }
+    },
+    {
+      "industry": "Suporte à saúde",
+      "salary_ranges": {
+        "entry": 25000,
+        "mid": 30000,
+        "senior": 35560
+      }
+    },
+    {
+      "industry": "Serviços de alimentação",
+      "salary_ranges": {
+        "entry": 22000,
+        "mid": 26000,
+        "senior": 30720
+      }
+    },
+    {
+      "industry": "Mineração",
+      "salary_ranges": {
+        "entry": 60000,
+        "mid": 90000,
+        "senior": 126707
+      }
+    },
+    {
+      "industry": "Informação",
+      "salary_ranges": {
+        "entry": 70000,
+        "mid": 110000,
+        "senior": 164400
+      }
+    },
+    {
+      "industry": "Serviços públicos",
+      "salary_ranges": {
+        "entry": 65000,
+        "mid": 95000,
+        "senior": 114137
+      }
+    },
+    {
+      "industry": "Comércio atacadista",
+      "salary_ranges": {
+        "entry": 40000,
+        "mid": 60000,
+        "senior": 78104
+      }
+    },
+    {
+      "industry": "Imobiliário",
+      "salary_ranges": {
+        "entry": 45000,
+        "mid": 65000,
+        "senior": 90220
+      }
+    },
+    {
+      "industry": "Serviços profissionais e técnicos",
+      "salary_ranges": {
+        "entry": 55000,
+        "mid": 80000,
+        "senior": 108030
+      }
+    },
+    {
+      "industry": "Seguros",
+      "salary_ranges": {
+        "entry": 50000,
+        "mid": 70000,
+        "senior": 94590
+      }
+    },
+    {
+      "industry": "Serviços de hospedagem e alimentação",
+      "salary_ranges": {
+        "entry": 25000,
+        "mid": 35000,
+        "senior": 29822
+      }
+    }
+  ]
