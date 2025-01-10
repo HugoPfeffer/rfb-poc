@@ -160,8 +160,6 @@ class TestEmploymentGenerator(unittest.TestCase):
             f"Salary distribution failed chi-square test (p={p_value:.4f})"
         )
         
-        return invalid_salaries
-        
     def test_save_industry_dataset(self):
         """Test if the industry dataset is saved with correct date stamp."""
         df = self.generator.generate(self.test_size)

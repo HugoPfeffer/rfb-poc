@@ -1,74 +1,106 @@
-.venv/
-.venv/*
-.venv*
+# Python
 __pycache__/
-testing_ignored/*
-testing_ignored/
-
-.cursorignore
-.cursorrules
-
-
-
-# Ignore data/clean and data/raw folders and their contents
-data/clean/
-data/clean/*
-data/raw/
-data/raw/*
-
-# Ignore VSCode files
-.vscode/
-.vscode/*
-
-# Ignore Python files
 *.py[cod]
-*.pyo
-*.pyd
-*.pyc
-__pycache__/
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
 
-# Ignore sensitive files
+# Virtual Environment
 .env
-*.env
-*.secret
-*.key
-*.pem
-*.crt
-*.p12
-*.pfx
-*.cer
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
 
-# Ignore Jupyter Notebook checkpoints
-.ipynb_checkpoints/
 
-# Ignore mypy cache
-.mypy_cache/
 
-# Ignore pytest cache
-.pytest_cache/
-
-# Ignore coverage reports
-htmlcov/
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.cursorrules
+.project
+.pydevproject
+.settings/
+.cursorignore
+# Testing
+.tox/
 .coverage
 .coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+htmlcov/
 
-# Ignore virtual environment directories
-.venv/
-.venv/*
-.venv*
-env/
-env/*
-env*
-venv/
-venv/*
-venv*
+# Project specific
+data/generated/*
+data/raw/*
+data/clean/*
+!data/configs/
+logs/*
+!logs/.gitkeep
 
-# Ignore build directories
-build/
-dist/
-*.egg-info/
-.eggs/
+# Jupyter Notebook
+.ipynb_checkpoints
+*.ipynb
 
-# Ignore logs
+# Cursor IDE
+.cursorignore
+.cursorrules
+.cursor/
+.cursor-test/
+
+# System
+.DS_Store
+Thumbs.db
+*.log
+*.bak
+*.swp
+*.tmp
+
+# Security and Secrets
+*.pem
+*.key
+*.crt
+*.cer
+*.p12
+*.pfx
+*.env
+*.secret
+credentials.json
+token.json
+
+# Documentation
+/site
+docs/_build/
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.swp
+*~.nib
 *.log
 

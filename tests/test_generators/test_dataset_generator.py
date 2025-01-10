@@ -6,10 +6,31 @@ import tempfile
 import os
 from datetime import datetime
 from typing import Dict, Any, Optional
+import pytest
 
 from src.generators.components import DataComponent
 from src.config.config_manager import config_manager
 from src.utils.logging_config import app_logger
+
+class TestDataComponent(DataComponent):
+    """Test implementation of DataComponent for testing purposes.
+    Note: This is not a test class, but a helper class for testing."""
+    
+    __test__ = False  # Tell pytest to ignore this class
+    
+    def generate(self, size: int) -> pd.DataFrame:
+        """Generate test data.
+        
+        Args:
+            size: Number of records to generate
+            
+        Returns:
+            pd.DataFrame: Generated test dataset
+        """
+        return pd.DataFrame({
+            'id': range(size),
+            'value': self.rng.rand(size)
+        })
 
 class TestDatasetGeneratorClass(unittest.TestCase):
     """Test cases for the base DataComponent class."""
@@ -74,23 +95,6 @@ class TestDatasetGeneratorClass(unittest.TestCase):
         # Check if different seeds produce different results
         with self.assertRaises(AssertionError):
             pd.testing.assert_frame_equal(df1, df2)
-
-class TestDataComponent(DataComponent):
-    """Test implementation of DataComponent for testing purposes."""
-    
-    def generate(self, size: int) -> pd.DataFrame:
-        """Generate test data.
-        
-        Args:
-            size: Number of records to generate
-            
-        Returns:
-            pd.DataFrame: Generated test dataset
-        """
-        return pd.DataFrame({
-            'id': range(size),
-            'value': self.rng.rand(size)
-        })
 
 if __name__ == '__main__':
     unittest.main() 

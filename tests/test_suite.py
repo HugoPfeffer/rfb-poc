@@ -22,25 +22,7 @@ from src.generators.components import (
 from tests.test_generators.test_dataset_generator import TestDatasetGeneratorClass
 from tests.test_generators.test_employment_generator import TestEmploymentGenerator
 from tests.test_generators.test_investment_generator import TestInvestmentGenerator
-
-class TestSection:
-    """Represents a section of tests."""
-    def __init__(self, name: str, description: str):
-        self.name = name
-        self.description = description
-        self.passed = 0
-        self.failed = 0
-        self.errors = 0
-        self.skipped = 0
-        self.total = 0
-        self.failures: List[Tuple[unittest.TestCase, str]] = []
-        self.start_time = 0.0
-        self.end_time = 0.0
-
-    @property
-    def elapsed_time(self) -> float:
-        """Get elapsed time for the section."""
-        return self.end_time - self.start_time
+from tests.test_utils import TestSection
 
 class ColoredTestRunner(unittest.TextTestRunner):
     """Custom test runner with colored output."""
