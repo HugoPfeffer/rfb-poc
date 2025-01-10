@@ -31,6 +31,15 @@ class TestDatasetGenerator(DatasetGenerator):
         if self.data is None:
             return False
         return all(col in self.data.columns for col in ['id', 'value', 'category'])
+    
+    def add_fraud_scenarios(self) -> None:
+        """Add simple fraud scenarios for testing."""
+        if self.data is not None:
+            self.data['is_fraudulent'] = np.random.choice(
+                [True, False], 
+                size=len(self.data), 
+                p=[0.1, 0.9]
+            )
 
 class TestDatasetGeneratorClass(unittest.TestCase):
     def setUp(self):

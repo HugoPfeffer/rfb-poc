@@ -60,6 +60,15 @@ class DatasetGenerator(ABC):
         """
         pass
     
+    @abstractmethod
+    def add_fraud_scenarios(self) -> None:
+        """Add fraud scenarios to the dataset.
+        
+        This method should be implemented by subclasses to add
+        domain-specific fraud patterns.
+        """
+        pass
+    
     def save(self, path: str, format: str = 'csv', include_metadata: bool = True) -> None:
         """Save the generated dataset to disk.
         

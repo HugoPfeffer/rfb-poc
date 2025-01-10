@@ -4,9 +4,9 @@ import time
 import inspect
 from typing import Any, Optional, Dict, List, Tuple
 from termcolor import colored
-from .test_dataset_generator import TestDatasetGeneratorClass
-from .test_employment_generator import TestEmploymentGenerator
-# from .test_investment_generator import TestInvestmentGenerator  # Uncomment when implemented
+from test.test_dataset_generator import TestDatasetGeneratorClass
+from test.test_employment_generator import TestEmploymentGenerator
+from test.test_investment_generator import TestInvestmentGenerator
 
 class TestSection:
     """Represents a section of tests."""
@@ -43,6 +43,10 @@ class ColoredTestRunner(unittest.TextTestRunner):
             'TestEmploymentGenerator': TestSection(
                 'Employment Generator Tests',
                 'Tests for employment data generation functionality'
+            ),
+            'TestInvestmentGenerator': TestSection(
+                'Investment Generator Tests',
+                'Tests for investment data generation and fraud detection'
             )
         }
         
@@ -202,7 +206,7 @@ def create_test_suite() -> unittest.TestSuite:
     # Add test cases from each test file
     test_suite.addTests(unittest.TestLoader().loadTestsFromTestCase(TestDatasetGeneratorClass))
     test_suite.addTests(unittest.TestLoader().loadTestsFromTestCase(TestEmploymentGenerator))
-    # test_suite.addTests(unittest.TestLoader().loadTestsFromTestCase(TestInvestmentGenerator))
+    test_suite.addTests(unittest.TestLoader().loadTestsFromTestCase(TestInvestmentGenerator))
     
     return test_suite
 

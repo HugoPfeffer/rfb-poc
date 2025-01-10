@@ -17,8 +17,6 @@ from src.controllers.employment_generator import EmploymentGenerator
 class TestEmploymentGenerator(unittest.TestCase):
     def setUp(self):
         """Set up test fixtures before each test method."""
-        # Set fixed random seed for reproducible tests
-        np.random.seed(42)
         self.generator = EmploymentGenerator()
         self.test_size = 100
         self.temp_dir = tempfile.mkdtemp()
@@ -33,7 +31,9 @@ class TestEmploymentGenerator(unittest.TestCase):
     def test_initialization(self):
         """Test if the generator initializes correctly."""
         self.assertIsNotNone(self.generator.industry_data)
-        self.assertEqual(self.generator.experience_levels, ['entry', 'mid', 'senior'])
+        self.assertEqual(set(self.generator.experience_levels), {'entry', 'mid', 'senior'})
+        self.assertIsNotNone(self.generator.settings)
+        self.assertIsInstance(self.generator.rng, np.random.RandomState)
         
     def test_generate_dataset(self):
         """Test if the generator creates a valid dataset of the correct size."""
@@ -66,26 +66,83 @@ class TestEmploymentGenerator(unittest.TestCase):
         valid_levels = set(self.generator.experience_levels)
         self.assertTrue(all(level in valid_levels for level in self.generator.data['experience_level']))
         
+        # Get expected probabilities from settings
+        expected_probs = {
+            level: self.generator.settings['experience_levels'][level]['probability']
+            for level in self.generator.experience_levels
+        }
+        
         # Check approximate distribution (allowing for random variation)
         level_counts = self.generator.data['experience_level'].value_counts(normalize=True)
         
-        # With fixed seed and larger sample size, we can use tighter bounds
-        self.assertAlmostEqual(level_counts['entry'], 0.4, delta=0.05)
-        self.assertAlmostEqual(level_counts['mid'], 0.4, delta=0.05)
-        self.assertAlmostEqual(level_counts['senior'], 0.2, delta=0.05)
+        for level, expected_prob in expected_probs.items():
+            self.assertAlmostEqual(level_counts[level], expected_prob, delta=0.05)
         
     def test_salary_data(self):
-        """Test if salary data is generated within expected ranges."""
-        df = self.generator.generate(self.test_size)
+        """Test if salary data is generated with appropriate distribution including outliers."""
+        # Use a larger sample size for more stable distribution
+        test_size = 1000
+        df = self.generator.generate(test_size)
         
-        for _, row in df.iterrows():
+        normal_range_count = 0
+        outlier_count = 0
+        
+        # Get range settings from configuration
+        dist_settings = self.generator.settings['salary_distribution']
+        normal_range = dist_settings['normal_range']
+        low_outlier = dist_settings['low_outlier']
+        high_outlier = dist_settings['high_outlier']
+        
+        print("\nSalary Distribution Analysis:")
+        print("----------------------------")
+        
+        for idx, row in df.iterrows():
             industry_info = next(ind for ind in self.generator.industry_data 
                                if ind['industry'] == row['industry'])
-            base_salary = industry_info['salary_ranges'][row['experience_level']]
+            base_salary = float(industry_info['salary_ranges'][row['experience_level']])
             
-            # Check if salary is within ±10% of base salary
-            self.assertTrue(0.9 * base_salary <= row['salary'] <= 1.1 * base_salary)
+            # Calculate percentage of base salary
+            ratio = float(row['salary']) / base_salary
             
+            # First check if it's in the normal range
+            if normal_range['min_ratio'] <= ratio <= normal_range['max_ratio']:
+                normal_range_count += 1
+            else:
+                # If not in normal range, verify it's in one of the outlier ranges
+                is_valid_outlier = (
+                    (low_outlier['min_ratio'] <= ratio <= low_outlier['max_ratio']) or
+                    (high_outlier['min_ratio'] <= ratio <= high_outlier['max_ratio'])
+                )
+                if not is_valid_outlier:
+                    print(f"\nInvalid salary found:")
+                    print(f"Industry: {row['industry']}")
+                    print(f"Experience: {row['experience_level']}")
+                    print(f"Base salary: {base_salary}")
+                    print(f"Actual salary: {row['salary']}")
+                    print(f"Ratio: {ratio:.2%}")
+                
+                self.assertTrue(
+                    is_valid_outlier,
+                    f"Salary {row['salary']} ({ratio:.2%} of base) outside expected ranges relative to base {base_salary}"
+                )
+                outlier_count += 1
+        
+        # Print distribution summary
+        print(f"\nNormal range count: {normal_range_count}")
+        print(f"Outlier count: {outlier_count}")
+        print(f"Normal ratio: {normal_range_count/test_size:.2%}")
+        print(f"Outlier ratio: {outlier_count/test_size:.2%}")
+        
+        # Check distribution (allowing for some random variation)
+        normal_ratio = normal_range_count / test_size
+        outlier_ratio = outlier_count / test_size
+        
+        expected_normal_prob = normal_range['probability']
+        expected_outlier_prob = low_outlier['probability'] + high_outlier['probability']
+        
+        self.assertAlmostEqual(normal_ratio, expected_normal_prob, delta=0.05)
+        self.assertAlmostEqual(outlier_ratio, expected_outlier_prob, delta=0.05)
+        
     def test_save_industry_dataset(self):
         """Test if the industry dataset is saved with correct date stamp."""
         df = self.generator.generate(self.test_size)

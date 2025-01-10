@@ -24,20 +24,23 @@ class EmploymentGenerator(DatasetGenerator):
         # Initialize data as empty DataFrame
         self.data = pd.DataFrame()
         
-        # Check config path if provided
-        if config and 'config_path' in config:
-            config_path = Path(config['config_path'])
-            if not config_path.exists():
-                raise FileNotFoundError(f"Config file not found: {config_path}")
+        # Load settings
+        self.settings = self._load_settings()
         
+        # Initialize random state with seed from settings
+        self.rng = np.random.RandomState(self.settings['random_seed'])
+        
+        # Load industry data
         self.industry_data = self._load_industry_ranges()
-        self.experience_levels = ['entry', 'mid', 'senior']
         
-    def _load_industry_ranges(self) -> List[Dict[str, Any]]:
-        """Load industry salary ranges from configuration file."""
-        config_path = Path('data/configs/industry_ranges.json')
+        # Get experience levels from settings
+        self.experience_levels = list(self.settings['experience_levels'].keys())
+    
+    def _load_settings(self) -> Dict[str, Any]:
+        """Load settings from configuration file."""
+        config_path = Path('data/configs/settings.json')
         if not config_path.exists():
-            raise FileNotFoundError("Industry ranges configuration file not found")
+            raise FileNotFoundError("Settings file not found")
             
         with open(config_path, 'r') as f:
             return json.load(f)
@@ -46,7 +49,7 @@ class EmploymentGenerator(DatasetGenerator):
         """Generate synthetic employment dataset.
         
         Args:
-            size: Number of employment records to generate
+            size: Number of records to generate
             
         Returns:
             pd.DataFrame: Generated employment dataset
@@ -59,54 +62,113 @@ class EmploymentGenerator(DatasetGenerator):
         self.add_experience_levels(size)
         self.add_salary_data()
         
+        # Add fraud scenarios
+        self.add_fraud_scenarios()
+        
         return self.data
     
     def add_industry_data(self, size: int) -> None:
-        """Add industry data to the dataset.
-        
-        Args:
-            size: Number of records to generate
-        """
+        """Add industry data to the dataset."""
         # Reset/initialize DataFrame with correct size
         self.data = pd.DataFrame(index=range(size))
         
         industries = [ind['industry'] for ind in self.industry_data]
-        self.data['industry'] = np.random.choice(industries, size=size)
+        self.data['industry'] = self.rng.choice(industries, size=size)
     
     def add_experience_levels(self, size: int) -> None:
-        """Add experience levels with specified distribution.
+        """Add experience levels with specified distribution."""
+        # Get probabilities from settings
+        probabilities = [
+            self.settings['experience_levels'][level]['probability']
+            for level in self.experience_levels
+        ]
         
-        Args:
-            size: Number of records to generate
-        """
-        # Ensure data DataFrame exists
-        if self.data is None or len(self.data) != size:
-            self.data = pd.DataFrame(index=range(size))
-        
-        # Generate experience levels with specified probabilities
-        self.data['experience_level'] = np.random.choice(
+        self.data['experience_level'] = self.rng.choice(
             self.experience_levels,
             size=size,
-            p=[0.4, 0.4, 0.2]  # 40% entry, 40% mid, 20% senior
+            p=probabilities
         )
     
     def add_salary_data(self) -> None:
         """Add salary information to the dataset."""
         salaries = []
         
+        # Get salary distribution settings
+        dist_settings = self.settings['salary_distribution']
+        
+        # Define ranges and probabilities
+        ranges = ['normal_range', 'low_outlier', 'high_outlier']
+        probabilities = [
+            dist_settings[r]['probability']
+            for r in ranges
+        ]
+        
         for _, row in self.data.iterrows():
             industry_info = next(
                 ind for ind in self.industry_data 
                 if ind['industry'] == row['industry']
             )
-            base_salary = industry_info['salary_ranges'][row['experience_level']]
+            base_salary = float(industry_info['salary_ranges'][row['experience_level']])
             
-            # Add some random variation (±10%)
-            variation = np.random.uniform(-0.1, 0.1)
-            salary = int(base_salary * (1 + variation))
+            # Select which range to use
+            range_type = self.rng.choice(ranges, p=probabilities)
+            range_settings = dist_settings[range_type]
+            
+            # Generate ratio based on the selected range
+            ratio = self.rng.uniform(
+                range_settings['min_ratio'],
+                range_settings['max_ratio']
+            )
+            
+            # Calculate and round the salary
+            salary = round(base_salary * ratio, 2)
             salaries.append(salary)
             
-        self.data['salary'] = salaries
+        self.data['salary'] = pd.Series(salaries, dtype='float64')
+    
+    def add_fraud_scenarios(self) -> None:
+        """Add fraud scenarios to employment data."""
+        if self.data is not None:
+            size = len(self.data)
+            fraud_settings = self.settings['fraud_scenarios']
+            
+            # Initialize fraud columns
+            self.data['is_fraudulent'] = False
+            self.data['fraud_type'] = 'none'
+            self.data['reported_salary'] = self.data['salary'].astype('float64')
+            
+            # Add fraud scenarios based on probability from settings
+            for idx in range(size):
+                if self.rng.random() < fraud_settings['probability']:
+                    self.data.loc[idx, 'is_fraudulent'] = True
+                    
+                    # Determine fraud type based on probability
+                    if self.rng.random() < fraud_settings['salary_misreporting']['probability']:
+                        # Salary misreporting
+                        true_salary = float(self.data.loc[idx, 'salary'])
+                        misreport_settings = fraud_settings['salary_misreporting']
+                        reported_ratio = self.rng.uniform(
+                            misreport_settings['min_ratio'],
+                            misreport_settings['max_ratio']
+                        )
+                        reported_salary = true_salary * reported_ratio
+                        self.data.loc[idx, 'reported_salary'] = round(reported_salary, 2)
+                        self.data.loc[idx, 'fraud_type'] = 'salary_misreporting'
+                    else:
+                        # Experience level inflation
+                        current_level = self.data.loc[idx, 'experience_level']
+                        if current_level == 'entry':
+                            self.data.loc[idx, 'experience_level'] = 'mid'
+                            self.data.loc[idx, 'fraud_type'] = 'experience_inflation'
+    
+    def _load_industry_ranges(self) -> List[Dict[str, Any]]:
+        """Load industry salary ranges from configuration file."""
+        config_path = Path('data/configs/industry_ranges.json')
+        if not config_path.exists():
+            raise FileNotFoundError("Industry ranges configuration file not found")
+            
+        with open(config_path, 'r') as f:
+            return json.load(f)
     
     def validate(self) -> bool:
         """Validate the generated employment dataset.
@@ -117,11 +179,32 @@ class EmploymentGenerator(DatasetGenerator):
         if self.data is None:
             return False
             
-        required_columns = {'industry', 'experience_level', 'salary'}
+        # Check required columns
+        required_columns = {
+            'industry', 'experience_level', 'salary', 
+            'is_fraudulent', 'fraud_type', 'reported_salary'
+        }
         if not all(col in self.data.columns for col in required_columns):
             return False
             
+        # Validate experience levels
         if not all(self.data['experience_level'].isin(self.experience_levels)):
+            return False
+            
+        # Validate industries
+        valid_industries = {ind['industry'] for ind in self.industry_data}
+        if not all(self.data['industry'].isin(valid_industries)):
+            return False
+            
+        # Validate fraud indicators
+        if not all(self.data['is_fraudulent'].isin([True, False])):
+            return False
+            
+        if not all(self.data['fraud_type'].isin(['none', 'salary_misreporting', 'experience_inflation'])):
+            return False
+            
+        # Validate salary relationships
+        if not all(self.data['reported_salary'] <= self.data['salary']):
             return False
             
         return True
@@ -181,5 +264,34 @@ class EmploymentGenerator(DatasetGenerator):
         """Add job titles to the dataset."""
         # TODO: Implement job title generation logic
         pass
+    
+    def add_fraud_scenarios(self) -> None:
+        """Add fraud scenarios to employment data."""
+        if self.data is not None:
+            size = len(self.data)
+            
+            # Initialize fraud columns
+            self.data['is_fraudulent'] = False
+            self.data['fraud_type'] = 'none'
+            self.data['reported_salary'] = self.data['salary'].astype('float64')
+            
+            # Add fraud scenarios (10% chance for each record)
+            for idx in range(size):
+                if np.random.random() < 0.1:  # 10% fraud rate
+                    self.data.loc[idx, 'is_fraudulent'] = True
+                    
+                    # 50-50 chance between salary misreporting and experience inflation
+                    if np.random.random() < 0.5:
+                        # Salary misreporting (report 70-90% of actual salary)
+                        true_salary = float(self.data.loc[idx, 'salary'])
+                        reported_salary = true_salary * np.random.uniform(0.7, 0.9)
+                        self.data.loc[idx, 'reported_salary'] = round(reported_salary, 2)
+                        self.data.loc[idx, 'fraud_type'] = 'salary_misreporting'
+                    else:
+                        # Experience level inflation
+                        current_level = self.data.loc[idx, 'experience_level']
+                        if current_level == 'entry':
+                            self.data.loc[idx, 'experience_level'] = 'mid'
+                            self.data.loc[idx, 'fraud_type'] = 'experience_inflation'
 
     

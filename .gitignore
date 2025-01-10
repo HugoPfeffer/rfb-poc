@@ -5,6 +5,11 @@ __pycache__/
 testing_ignored/*
 testing_ignored/
 
+.cursorignore
+.cursorrules
+
+
+
 # Ignore data/clean and data/raw folders and their contents
 data/clean/
 data/clean/*

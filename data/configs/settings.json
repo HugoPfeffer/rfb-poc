@@ -1,0 +1,39 @@
+{
+    "random_seed": 42,
+    "salary_distribution": {
+        "normal_range": {
+            "probability": 0.85,
+            "min_ratio": 0.85,
+            "max_ratio": 1.15
+        },
+        "low_outlier": {
+            "probability": 0.09,
+            "min_ratio": 0.60,
+            "max_ratio": 0.85
+        },
+        "high_outlier": {
+            "probability": 0.06,
+            "min_ratio": 1.15,
+            "max_ratio": 1.50
+        }
+    },
+    "experience_levels": {
+        "entry": {
+            "probability": 0.4
+        },
+        "mid": {
+            "probability": 0.4
+        },
+        "senior": {
+            "probability": 0.2
+        }
+    },
+    "fraud_scenarios": {
+        "probability": 0.1,
+        "salary_misreporting": {
+            "probability": 0.5,
+            "min_ratio": 0.7,
+            "max_ratio": 0.9
+        }
+    }
+}
