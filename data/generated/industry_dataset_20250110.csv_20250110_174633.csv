@@ -1,0 +1,101 @@
+industry,experience_level,salary,reported_salary,is_fraudulent,fraud_type
+Tecnologia e Desenvolvimento de Software,mid,93048.4,93048.4,False,none
+Transporte e Logística,senior,99342.9,99342.9,False,none
+Mídia e Entretenimento,senior,95273.39,95273.39,False,none
+Energia e Utilidades,entry,74732.0,74732.0,False,none
+Energia e Utilidades,entry,74603.18,74603.18,False,none
+Governo,senior,87934.32,87934.32,False,none
+Saúde,senior,103055.58,103055.58,False,none
+Consultoria,mid,97088.22,97088.22,False,none
+Educação,senior,73056.91,73056.91,False,none
+Jurídico,mid,152256.27,152256.27,False,none
+Hospitalidade e Turismo,senior,61520.2,61520.2,False,none
+Jurídico,mid,111081.83,111081.83,False,none
+Educação,entry,41697.59,41697.59,False,none
+Governo,mid,86780.43,86780.43,False,none
+Vendas,mid,62857.94,62857.94,False,none
+Marketing,entry,56264.27,56264.27,False,none
+Organizações Sem Fins Lucrativos,entry,38683.48,38683.48,False,none
+Engenharia,entry,65028.1,65028.1,False,none
+Energia e Utilidades,mid,73718.69,73718.69,False,none
+Ciência de Dados e Análise,mid,79721.16,79721.16,False,none
+Tecnologia e Desenvolvimento de Software,entry,77081.14,77081.14,False,none
+Tecnologia e Desenvolvimento de Software,entry,70785.62,70785.62,False,none
+Organizações Sem Fins Lucrativos,senior,66045.76,66045.76,False,none
+Engenharia,senior,134473.0,134473.0,False,none
+Vendas,entry,54993.96,54993.96,False,none
+Vendas,entry,36022.56,36022.56,False,none
+Mídia e Entretenimento,mid,85775.85,85775.85,False,none
+Marketing,mid,55747.13,55747.13,False,none
+Governo,mid,64182.42,64182.42,False,none
+Ciência de Dados e Análise,mid,81071.68,81071.68,False,none
+Saúde,mid,72009.52,72009.52,False,none
+Consultoria,entry,56738.52,56738.52,False,none
+Engenharia,entry,76553.23,76553.23,False,none
+Consultoria,entry,68453.94,68453.94,False,none
+Recursos Humanos,senior,106591.97,106591.97,False,none
+Jurídico,senior,149348.83,149348.83,False,none
+Vendas,mid,104868.38,104868.38,False,none
+Vendas,senior,132430.98,132430.98,False,none
+Varejo,mid,40208.81,40208.81,False,none
+Manufatura,mid,68310.47,68310.47,False,none
+Transporte e Logística,entry,51577.2,51577.2,False,none
+Vendas,entry,62088.05,62088.05,False,none
+Recursos Humanos,entry,54652.22,54652.22,False,none
+Varejo,entry,28543.3,28543.3,False,none
+Tecnologia e Desenvolvimento de Software,entry,57794.92,57794.92,False,none
+Consultoria,senior,209936.49,209936.49,False,none
+Mídia e Entretenimento,entry,26971.6,26971.6,False,none
+Telecomunicações,mid,86775.1,86775.1,False,none
+Hospitalidade e Turismo,mid,43056.32,43056.32,False,none
+Tecnologia e Desenvolvimento de Software,senior,126232.54,126232.54,False,none
+Telecomunicações,entry,50064.59,50064.59,False,none
+Energia e Utilidades,entry,75616.69,75616.69,False,none
+Mídia e Entretenimento,entry,42075.52,42075.52,False,none
+Recursos Humanos,mid,50525.26,50525.26,False,none
+Engenharia,mid,94251.21,94251.21,False,none
+Varejo,entry,38685.87,38685.87,False,none
+Engenharia,senior,126753.28,126753.28,False,none
+Ciência de Dados e Análise,entry,53112.92,53112.92,False,none
+Transporte e Logística,senior,99971.35,99971.35,False,none
+Manufatura,mid,72907.58,72907.58,False,none
+Saúde,entry,52656.33,52656.33,False,none
+Telecomunicações,mid,101163.14,101163.14,False,none
+Transporte e Logística,mid,74837.83,74837.83,False,none
+Tecnologia e Desenvolvimento de Software,mid,123291.5,123291.5,False,none
+Hospitalidade e Turismo,entry,23980.05,23980.05,False,none
+Hospitalidade e Turismo,entry,29645.95,29645.95,False,none
+Ciência de Dados e Análise,mid,66845.82,66845.82,False,none
+Marketing,entry,41104.47,41104.47,False,none
+Marketing,entry,37514.07,37514.07,False,none
+Organizações Sem Fins Lucrativos,mid,53230.52,53230.52,False,none
+Manufatura,entry,59506.64,59506.64,False,none
+Transporte e Logística,entry,40961.63,40961.63,False,none
+Marketing,senior,80318.82,80318.82,False,none
+Saúde,entry,66122.02,66122.02,False,none
+Organizações Sem Fins Lucrativos,entry,29720.56,29720.56,False,none
+Manufatura,entry,54493.68,54493.68,False,none
+Educação,mid,69408.14,69408.14,False,none
+Jurídico,entry,58243.41,58243.41,False,none
+Transporte e Logística,senior,86465.23,86465.23,False,none
+Tecnologia e Desenvolvimento de Software,entry,51618.84,51618.84,False,none
+Recursos Humanos,mid,80604.53,80604.53,False,none
+Telecomunicações,entry,61627.74,61627.74,False,none
+Finanças e Bancos,entry,70647.04,70647.04,False,none
+Saúde,mid,111610.55,111610.55,False,none
+Transporte e Logística,entry,26437.88,26437.88,False,none
+Varejo,entry,33909.79,33909.79,False,none
+Organizações Sem Fins Lucrativos,entry,41763.01,41763.01,False,none
+Ciência de Dados e Análise,entry,70579.58,70579.58,False,none
+Consultoria,senior,171558.77,171558.77,False,none
+Jurídico,entry,73813.84,73813.84,False,none
+Varejo,mid,45432.31,45432.31,False,none
+Educação,entry,44648.82,44648.82,False,none
+Recursos Humanos,entry,40571.04,40571.04,False,none
+Tecnologia e Desenvolvimento de Software,mid,85825.43,85825.43,False,none
+Varejo,mid,43952.85,43952.85,False,none
+Transporte e Logística,entry,43935.55,43935.55,False,none
+Hospitalidade e Turismo,mid,48318.79,48318.79,False,none
+Governo,senior,123314.97,123314.97,False,none
+Recursos Humanos,mid,80148.36,80148.36,False,none
+Engenharia,mid,82471.8,82471.8,False,none

@@ -3,10 +3,25 @@ import sys
 import time
 import inspect
 from typing import Any, Optional, Dict, List, Tuple
+from pathlib import Path
+import tempfile
+import os
+import pandas as pd
+import numpy as np
 from termcolor import colored
-from test.test_dataset_generator import TestDatasetGeneratorClass
-from test.test_employment_generator import TestEmploymentGenerator
-from test.test_investment_generator import TestInvestmentGenerator
+
+from src.config.config_manager import config_manager
+from src.utils.logging_config import app_logger
+from src.validation.validation_framework import ValidationError
+from src.generators.components import (
+    DataComponent,
+    DataPersistence,
+    DataTransformation,
+    FraudScenarioGenerator
+)
+from tests.test_generators.test_dataset_generator import TestDatasetGeneratorClass
+from tests.test_generators.test_employment_generator import TestEmploymentGenerator
+from tests.test_generators.test_investment_generator import TestInvestmentGenerator
 
 class TestSection:
     """Represents a section of tests."""

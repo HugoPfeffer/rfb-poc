@@ -10,16 +10,15 @@ import sys
 from typing import Dict, Any, Optional
 import scipy.stats
 
-# Add the src directory to the Python path
-sys.path.append(str(Path(__file__).parent.parent))
-
-from src.controllers.employment_generator import EmploymentGenerator
+from src.generators.employment_generator import EmploymentDataGenerator
+from src.config.config_manager import config_manager
+from src.utils.logging_config import app_logger
 
 class TestEmploymentGenerator(unittest.TestCase):
     def setUp(self):
         """Set up test fixtures before each test method."""
-        self.generator = EmploymentGenerator()
-        self.test_settings = self.generator.settings['test_settings']
+        self.generator = EmploymentDataGenerator()
+        self.test_settings = self.generator.config['test_settings']
         self.test_size = self.test_settings['default_test_size']
         self.temp_dir = tempfile.mkdtemp()
         
@@ -34,7 +33,7 @@ class TestEmploymentGenerator(unittest.TestCase):
         """Test if the generator initializes correctly."""
         self.assertIsNotNone(self.generator.industry_data)
         self.assertEqual(set(self.generator.experience_levels), {'entry', 'mid', 'senior'})
-        self.assertIsNotNone(self.generator.settings)
+        self.assertIsNotNone(self.generator.config)
         self.assertIsInstance(self.generator.rng, np.random.RandomState)
         
     def test_generate_dataset(self):
@@ -70,7 +69,7 @@ class TestEmploymentGenerator(unittest.TestCase):
         
         # Get expected probabilities from settings
         expected_probs = {
-            level: self.generator.settings['experience_levels'][level]['probability']
+            level: self.generator.config['experience_levels'][level]['probability']
             for level in self.generator.experience_levels
         }
         
@@ -82,19 +81,18 @@ class TestEmploymentGenerator(unittest.TestCase):
         
     def test_salary_data(self):
         """Test if salary data is generated with appropriate distribution including outliers."""
-        # Use a larger sample size for more stable distribution
         test_size = self.test_settings['large_test_size']
         df = self.generator.generate(test_size)
         
-        invalid_salaries = 0
-        normal_range_count = 0
-        outlier_count = 0
-        
-        # Get range settings from configuration
-        dist_settings = self.generator.settings['salary_distribution']
+        # Get distribution settings
+        dist_settings = self.generator.config['salary_distribution']
         normal_range = dist_settings['normal_range']
         low_outlier = dist_settings['low_outlier']
         high_outlier = dist_settings['high_outlier']
+        
+        normal_range_count = 0
+        outlier_count = 0
+        invalid_salaries = 0
         
         print("\nSalary Distribution Analysis:")
         print("----------------------------")
@@ -102,7 +100,9 @@ class TestEmploymentGenerator(unittest.TestCase):
         for idx, row in df.iterrows():
             industry_info = next(ind for ind in self.generator.industry_data 
                                if ind['industry'] == row['industry'])
-            base_salary = float(industry_info['salary_ranges'][row['experience_level']])
+            salary_range = industry_info['salary_ranges'][row['experience_level']]
+            min_salary, max_salary = map(float, salary_range.split('-'))
+            base_salary = (min_salary + max_salary) / 2
             
             # Calculate percentage of base salary
             ratio = float(row['salary']) / base_salary

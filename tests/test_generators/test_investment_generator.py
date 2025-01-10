@@ -8,13 +8,14 @@ from datetime import datetime
 import sys
 from typing import Dict, Any, Optional
 
-sys.path.append(str(Path(__file__).parent.parent))
-from src.controllers.investment_generator import InvestmentGenerator
+from src.generators.investment_generator import InvestmentDataGenerator
+from src.config.config_manager import config_manager
+from src.utils.logging_config import app_logger
 
 class TestInvestmentGenerator(unittest.TestCase):
     def setUp(self):
         """Set up test fixtures before each test method."""
-        self.generator = InvestmentGenerator()
+        self.generator = InvestmentDataGenerator()
         self.test_settings = self.generator.settings['test_settings']
         np.random.seed(self.test_settings['random_seed'])  # For reproducibility
         self.test_size = self.test_settings['default_test_size']
@@ -45,8 +46,8 @@ class TestInvestmentGenerator(unittest.TestCase):
         
         # Verify fraud probabilities are roughly as expected
         self.assertAlmostEqual(
-            fraud_counts['underreported_income'],
-            self.generator.fraud_probabilities['underreported_income'],
+            fraud_counts['none'],
+            1 - sum(self.generator.fraud_probabilities.values()),
             delta=self.test_settings['delta_tolerance']
         )
         
@@ -83,7 +84,7 @@ class TestInvestmentGenerator(unittest.TestCase):
         df = self.generator.generate(self.test_size)
         
         # Check lifestyle ratio calculation
-        calculated_ratio = (df['luxury_spending'] + df['travel_spending']) / df['reported_income']
+        calculated_ratio = (df['luxury_spending'] + df['travel_spending']) / df['reported_salary']
         calculated_ratio = round(calculated_ratio, 4)
         calculated_ratio.name = 'lifestyle_ratio'  # Set the series name to match
         
@@ -95,7 +96,7 @@ class TestInvestmentGenerator(unittest.TestCase):
         # Verify suspicious lifestyle flag
         expected_suspicious = (
             (df['lifestyle_ratio'] > self.test_settings['lifestyle_thresholds']['ratio_threshold']) |
-            (df['luxury_spending'] > df['reported_income'] * self.test_settings['lifestyle_thresholds']['luxury_spending_ratio'])
+            (df['luxury_spending'] > df['reported_salary'] * self.test_settings['lifestyle_thresholds']['luxury_spending_ratio'])
         )
         expected_suspicious.name = 'suspicious_lifestyle'  # Set the series name to match
         

@@ -14,7 +14,7 @@
         "high_outlier": {
             "probability": 0.06,
             "min_ratio": 1.15,
-            "max_ratio": 1.50
+            "max_ratio": 1.60
         }
     },
     "experience_levels": {
@@ -60,12 +60,11 @@
         "validation": {
             "required_columns": {
                 "base": ["id", "value", "category"],
-                "employment": ["industry", "experience_level", "salary"],
+                "employment": ["industry", "experience_level", "salary", "reported_salary"],
                 "investment": [
-                    "industry", "experience_level", "salary", "annual_investment",
-                    "stocks", "bonds", "cash", "real_estate", 
+                    "industry", "experience_level", "salary", "reported_salary",
+                    "annual_investment", "stocks", "bonds", "cash", "real_estate", 
                     "expected_annual_return", "expected_value_1yr",
-                    "reported_income", "reported_deductions", "true_deductions",
                     "luxury_spending", "travel_spending", "lifestyle_ratio",
                     "is_fraudulent", "fraud_type", "suspicious_lifestyle"
                 ]
