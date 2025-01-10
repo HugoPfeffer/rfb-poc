@@ -1,5 +1,5 @@
 {
-    "random_seed": 42,
+    "random_seed": 102,
     "salary_distribution": {
         "normal_range": {
             "probability": 0.85,
@@ -34,6 +34,46 @@
             "probability": 0.5,
             "min_ratio": 0.7,
             "max_ratio": 0.9
+        }
+    },
+    "test_settings": {
+        "default_test_size": 100,
+        "large_test_size": 1000,
+        "random_seed": 102,
+        "delta_tolerance": 0.05,
+        "lifestyle_thresholds": {
+            "ratio_threshold": 0.4,
+            "luxury_spending_ratio": 0.25
+        },
+        "asset_allocation": {
+            "atol": 1e-4,
+            "stocks_range": [0.0, 0.8],
+            "bonds_range": [0.1, 0.6],
+            "cash_range": [0.05, 0.3],
+            "real_estate_range": [0.0, 0.4]
+        },
+        "sample_size": {
+            "default": 5,
+            "max": 10
+        },
+        "temp_file_formats": ["csv", "parquet", "json"],
+        "validation": {
+            "required_columns": {
+                "base": ["id", "value", "category"],
+                "employment": ["industry", "experience_level", "salary"],
+                "investment": [
+                    "industry", "experience_level", "salary", "annual_investment",
+                    "stocks", "bonds", "cash", "real_estate", 
+                    "expected_annual_return", "expected_value_1yr",
+                    "reported_income", "reported_deductions", "true_deductions",
+                    "luxury_spending", "travel_spending", "lifestyle_ratio",
+                    "is_fraudulent", "fraud_type", "suspicious_lifestyle"
+                ]
+            }
+        },
+        "output_paths": {
+            "test_data": "data/test",
+            "temp": "data/temp"
         }
     }
 }

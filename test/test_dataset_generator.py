@@ -17,8 +17,20 @@ from src.controllers.dataset_generator import DatasetGenerator
 class TestDatasetGenerator(DatasetGenerator):
     """Concrete implementation of DatasetGenerator for testing."""
     
+    def __init__(self, config: Optional[Dict[str, Any]] = None):
+        """Initialize the test dataset generator."""
+        super().__init__(config)
+        # Ensure we have test settings even if config loading failed
+        if 'test_settings' not in self.settings:
+            self.settings['test_settings'] = {
+                'default_test_size': 100,
+                'sample_size': {'default': 5, 'max': 10},
+                'temp_file_formats': ['csv', 'parquet', 'json']
+            }
+    
     def generate(self, size: int) -> pd.DataFrame:
         """Generate a simple test dataset."""
+        # Use the random state from parent class
         self.data = pd.DataFrame({
             'id': range(size),
             'value': np.random.rand(size),
@@ -30,22 +42,28 @@ class TestDatasetGenerator(DatasetGenerator):
         """Simple validation for testing."""
         if self.data is None:
             return False
-        return all(col in self.data.columns for col in ['id', 'value', 'category'])
+        required_columns = self.settings['test_settings']['validation']['required_columns']['base']
+        return all(col in self.data.columns for col in required_columns)
     
     def add_fraud_scenarios(self) -> None:
         """Add simple fraud scenarios for testing."""
         if self.data is not None:
+            fraud_prob = self.settings.get('fraud_scenarios', {}).get('probability', 0.1)
             self.data['is_fraudulent'] = np.random.choice(
                 [True, False], 
                 size=len(self.data), 
-                p=[0.1, 0.9]
+                p=[fraud_prob, 1 - fraud_prob]
             )
 
 class TestDatasetGeneratorClass(unittest.TestCase):
     def setUp(self):
         """Set up test fixtures before each test method."""
         self.generator = TestDatasetGenerator()
-        self.test_size = 100
+        # Ensure test_settings exists before accessing it
+        if not hasattr(self.generator, 'settings') or 'test_settings' not in self.generator.settings:
+            raise ValueError("Test settings not properly initialized in generator")
+        self.test_settings = self.generator.settings['test_settings']
+        self.test_size = self.test_settings['default_test_size']
         self.temp_dir = tempfile.mkdtemp()
         
     def tearDown(self):
@@ -67,29 +85,25 @@ class TestDatasetGeneratorClass(unittest.TestCase):
         
         self.assertIsInstance(df, pd.DataFrame)
         self.assertEqual(len(df), self.test_size)
+        
+        # Check if all required columns exist using settings
+        required_columns = set(self.test_settings['validation']['required_columns']['base'])
+        self.assertTrue(all(col in df.columns for col in required_columns))
         self.assertTrue(self.generator.validate())
         
     def test_save_formats(self):
         """Test saving data in different formats with metadata."""
         self.generator.generate(self.test_size)
         
-        # Test CSV format
-        csv_path = os.path.join(self.temp_dir, 'test.csv')
-        self.generator.save(csv_path, format='csv', include_metadata=True)
-        self.assertTrue(os.path.exists(csv_path))
-        metadata_path = Path(csv_path).with_suffix('.metadata.json')
-        self.assertTrue(os.path.exists(metadata_path))
-        
-        # Test Parquet format
-        parquet_path = os.path.join(self.temp_dir, 'test.parquet')
-        self.generator.save(parquet_path, format='parquet')
-        self.assertTrue(os.path.exists(parquet_path))
-        
-        # Test JSON format
-        json_path = os.path.join(self.temp_dir, 'test.json')
-        self.generator.save(json_path, format='json')
-        self.assertTrue(os.path.exists(json_path))
-        
+        for format in self.test_settings['temp_file_formats']:
+            file_path = os.path.join(self.temp_dir, f'test.{format}')
+            self.generator.save(file_path, format=format, include_metadata=(format == 'csv'))
+            self.assertTrue(os.path.exists(file_path))
+            
+            if format == 'csv':
+                metadata_path = Path(file_path).with_suffix('.metadata.json')
+                self.assertTrue(os.path.exists(metadata_path))
+                
     def test_metadata_content(self):
         """Test metadata generation and content."""
         self.generator.generate(self.test_size)
@@ -166,11 +180,11 @@ class TestDatasetGeneratorClass(unittest.TestCase):
         
         # Test default sample size
         sample = self.generator.sample_data()
-        self.assertEqual(len(sample), 5)
+        self.assertEqual(len(sample), self.test_settings['sample_size']['default'])
         
         # Test custom sample size
-        sample = self.generator.sample_data(n=10)
-        self.assertEqual(len(sample), 10)
+        sample = self.generator.sample_data(n=self.test_settings['sample_size']['max'])
+        self.assertEqual(len(sample), self.test_settings['sample_size']['max'])
         
         # Test sample size larger than dataset
         sample = self.generator.sample_data(n=self.test_size + 10)

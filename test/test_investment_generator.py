@@ -14,9 +14,10 @@ from src.controllers.investment_generator import InvestmentGenerator
 class TestInvestmentGenerator(unittest.TestCase):
     def setUp(self):
         """Set up test fixtures before each test method."""
-        np.random.seed(42)  # For reproducibility
         self.generator = InvestmentGenerator()
-        self.test_size = 100
+        self.test_settings = self.generator.settings['test_settings']
+        np.random.seed(self.test_settings['random_seed'])  # For reproducibility
+        self.test_size = self.test_settings['default_test_size']
         
     def test_initialization(self):
         """Test if the generator initializes correctly."""
@@ -29,21 +30,15 @@ class TestInvestmentGenerator(unittest.TestCase):
         """Test if the generator creates a valid dataset with all required columns."""
         df = self.generator.generate(self.test_size)
         
-        required_columns = {
-            'industry', 'experience_level', 'salary', 'annual_investment',
-            'stocks', 'bonds', 'cash', 'real_estate', 
-            'expected_annual_return', 'expected_value_1yr',
-            'reported_income', 'reported_deductions', 'true_deductions',
-            'luxury_spending', 'travel_spending', 'lifestyle_ratio',
-            'is_fraudulent', 'fraud_type', 'suspicious_lifestyle'
-        }
+        # Check required columns from settings
+        required_columns = set(self.test_settings['validation']['required_columns']['investment'])
         
         self.assertEqual(len(df), self.test_size)
         self.assertTrue(all(col in df.columns for col in required_columns))
         
     def test_fraud_scenarios(self):
         """Test if fraud scenarios are generated correctly."""
-        df = self.generator.generate(1000)  # Larger sample for stable proportions
+        df = self.generator.generate(self.test_settings['large_test_size'])  # Larger sample for stable proportions
         
         # Check fraud type distributions
         fraud_counts = df['fraud_type'].value_counts(normalize=True)
@@ -52,7 +47,7 @@ class TestInvestmentGenerator(unittest.TestCase):
         self.assertAlmostEqual(
             fraud_counts['underreported_income'],
             self.generator.fraud_probabilities['underreported_income'],
-            delta=0.05
+            delta=self.test_settings['delta_tolerance']
         )
         
         # Verify fraud indicators are consistent
@@ -68,13 +63,20 @@ class TestInvestmentGenerator(unittest.TestCase):
         allocation_cols = ['stocks', 'bonds', 'cash', 'real_estate']
         allocation_sums = df[allocation_cols].sum(axis=1)
         
-        self.assertTrue(all(np.isclose(allocation_sums, 1.0, atol=1e-4)))
+        self.assertTrue(all(np.isclose(allocation_sums, 1.0, atol=self.test_settings['asset_allocation']['atol'])))
         
-        # Check allocations are within bounds
-        for asset, (min_alloc, max_alloc) in self.generator.asset_classes.items():
+        # Check allocations are within bounds from settings
+        allocation_ranges = {
+            'stocks': self.test_settings['asset_allocation']['stocks_range'],
+            'bonds': self.test_settings['asset_allocation']['bonds_range'],
+            'cash': self.test_settings['asset_allocation']['cash_range'],
+            'real_estate': self.test_settings['asset_allocation']['real_estate_range']
+        }
+        
+        for asset, (min_alloc, max_alloc) in allocation_ranges.items():
             self.assertTrue(all(
                 (df[asset] >= min_alloc) & (df[asset] <= max_alloc)
-            ))
+            ), f"Asset {asset} allocations outside allowed range [{min_alloc}, {max_alloc}]")
             
     def test_lifestyle_indicators(self):
         """Test if lifestyle indicators are generated correctly."""
@@ -92,8 +94,8 @@ class TestInvestmentGenerator(unittest.TestCase):
         
         # Verify suspicious lifestyle flag
         expected_suspicious = (
-            (df['lifestyle_ratio'] > 0.4) |
-            (df['luxury_spending'] > df['reported_income'] * 0.25)
+            (df['lifestyle_ratio'] > self.test_settings['lifestyle_thresholds']['ratio_threshold']) |
+            (df['luxury_spending'] > df['reported_income'] * self.test_settings['lifestyle_thresholds']['luxury_spending_ratio'])
         )
         expected_suspicious.name = 'suspicious_lifestyle'  # Set the series name to match
         

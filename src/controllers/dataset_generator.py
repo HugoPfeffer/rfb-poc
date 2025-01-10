@@ -26,9 +26,24 @@ class DatasetGenerator(ABC):
         """Initialize the dataset generator.
         
         Args:
-            config: Configuration dictionary for the generator
+            config: Configuration dictionary for the generator. If None, loads from default settings.json
         """
         self.config = config or {}
+        self.settings = self.config.copy()  # Create a copy to avoid modifying the original
+        
+        if not self.settings:
+            settings_path = Path(__file__).parent.parent.parent / 'data' / 'configs' / 'settings.json'
+            try:
+                with open(settings_path, 'r') as f:
+                    self.settings = json.load(f)
+                    self.config = self.settings.copy()  # Keep original config in sync
+            except FileNotFoundError:
+                logger.warning(f"Settings file not found at {settings_path}, using default settings")
+                self._init_default_settings()
+            except json.JSONDecodeError:
+                logger.error(f"Invalid JSON in settings file at {settings_path}, using default settings")
+                self._init_default_settings()
+        
         self.data: Optional[pd.DataFrame] = None
         self._datasets: Dict[str, pd.DataFrame] = {}
         self._metadata: Dict[str, Any] = {
@@ -39,6 +54,53 @@ class DatasetGenerator(ABC):
             'validation_status': False
         }
         
+        # Initialize random state if seed is provided
+        self._init_random_state()
+        
+    def _init_default_settings(self) -> None:
+        """Initialize default settings if settings file is not available."""
+        self.settings = {
+            'random_seed': 42,
+            'test_settings': {
+                'default_test_size': 100,
+                'large_test_size': 1000,
+                'random_seed': 42,
+                'delta_tolerance': 0.05,
+                'sample_size': {
+                    'default': 5,
+                    'max': 10
+                },
+                'temp_file_formats': ['csv', 'parquet', 'json'],
+                'validation': {
+                    'required_columns': {
+                        'base': ['id', 'value', 'category'],
+                        'employment': ['industry', 'experience_level', 'salary'],
+                        'investment': [
+                            'industry', 'experience_level', 'salary', 'annual_investment',
+                            'stocks', 'bonds', 'cash', 'real_estate', 
+                            'expected_annual_return', 'expected_value_1yr',
+                            'reported_income', 'reported_deductions', 'true_deductions',
+                            'luxury_spending', 'travel_spending', 'lifestyle_ratio',
+                            'is_fraudulent', 'fraud_type', 'suspicious_lifestyle'
+                        ]
+                    }
+                },
+                'output_paths': {
+                    'test_data': 'data/test',
+                    'temp': 'data/temp'
+                }
+            }
+        }
+        self.config = self.settings.copy()
+        
+    def _init_random_state(self) -> None:
+        """Initialize random state from settings."""
+        # Try test settings first, then fall back to global random_seed
+        random_seed = (self.settings.get('test_settings', {}).get('random_seed') or 
+                      self.settings.get('random_seed', 42))
+        np.random.seed(random_seed)
+        logger.debug(f"Initialized random state with seed: {random_seed}")
+    
     @abstractmethod
     def generate(self, size: int) -> pd.DataFrame:
         """Generate synthetic dataset.

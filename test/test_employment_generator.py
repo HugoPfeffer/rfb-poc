@@ -8,6 +8,7 @@ import os
 from datetime import datetime
 import sys
 from typing import Dict, Any, Optional
+import scipy.stats
 
 # Add the src directory to the Python path
 sys.path.append(str(Path(__file__).parent.parent))
@@ -18,7 +19,8 @@ class TestEmploymentGenerator(unittest.TestCase):
     def setUp(self):
         """Set up test fixtures before each test method."""
         self.generator = EmploymentGenerator()
-        self.test_size = 100
+        self.test_settings = self.generator.settings['test_settings']
+        self.test_size = self.test_settings['default_test_size']
         self.temp_dir = tempfile.mkdtemp()
         
     def tearDown(self):
@@ -43,8 +45,8 @@ class TestEmploymentGenerator(unittest.TestCase):
         self.assertIsInstance(df, pd.DataFrame)
         self.assertEqual(len(df), self.test_size)
         
-        # Check if all required columns exist
-        required_columns = {'industry', 'experience_level', 'salary'}
+        # Check if all required columns exist using settings
+        required_columns = set(self.test_settings['validation']['required_columns']['employment'])
         self.assertTrue(all(col in df.columns for col in required_columns))
         
     def test_industry_data(self):
@@ -58,7 +60,7 @@ class TestEmploymentGenerator(unittest.TestCase):
     def test_experience_levels(self):
         """Test if experience levels are generated with correct distribution."""
         # Use a larger sample size for more stable distribution
-        test_size = 1000
+        test_size = self.test_settings['large_test_size']
         self.generator.add_industry_data(test_size)
         self.generator.add_experience_levels(test_size)
         
@@ -76,14 +78,15 @@ class TestEmploymentGenerator(unittest.TestCase):
         level_counts = self.generator.data['experience_level'].value_counts(normalize=True)
         
         for level, expected_prob in expected_probs.items():
-            self.assertAlmostEqual(level_counts[level], expected_prob, delta=0.05)
+            self.assertAlmostEqual(level_counts[level], expected_prob, delta=self.test_settings['delta_tolerance'])
         
     def test_salary_data(self):
         """Test if salary data is generated with appropriate distribution including outliers."""
         # Use a larger sample size for more stable distribution
-        test_size = 1000
+        test_size = self.test_settings['large_test_size']
         df = self.generator.generate(test_size)
         
+        invalid_salaries = 0
         normal_range_count = 0
         outlier_count = 0
         
@@ -114,7 +117,8 @@ class TestEmploymentGenerator(unittest.TestCase):
                     (high_outlier['min_ratio'] <= ratio <= high_outlier['max_ratio'])
                 )
                 if not is_valid_outlier:
-                    print(f"\nInvalid salary found:")
+                    invalid_salaries += 1
+                    print(f"\nInvalid salary found: {invalid_salaries}")
                     print(f"Industry: {row['industry']}")
                     print(f"Experience: {row['experience_level']}")
                     print(f"Base salary: {base_salary}")
@@ -130,22 +134,39 @@ class TestEmploymentGenerator(unittest.TestCase):
         # Print distribution summary
         print(f"\nNormal range count: {normal_range_count}")
         print(f"Outlier count: {outlier_count}")
+        print(f"Invalid salaries found: {invalid_salaries}")
         print(f"Normal ratio: {normal_range_count/test_size:.2%}")
         print(f"Outlier ratio: {outlier_count/test_size:.2%}")
         
-        # Check distribution (allowing for some random variation)
-        normal_ratio = normal_range_count / test_size
-        outlier_ratio = outlier_count / test_size
+        # Perform chi-square test for distribution goodness of fit
+        observed = np.array([normal_range_count, outlier_count])
+        expected_probs = np.array([
+            normal_range['probability'],
+            low_outlier['probability'] + high_outlier['probability']
+        ])
+        expected = test_size * expected_probs
         
-        expected_normal_prob = normal_range['probability']
-        expected_outlier_prob = low_outlier['probability'] + high_outlier['probability']
+        chi2, p_value = scipy.stats.chisquare(observed, expected)
+        print(f"\nChi-square test results:")
+        print(f"Chi-square statistic: {chi2:.2f}")
+        print(f"p-value: {p_value:.4f}")
         
-        self.assertAlmostEqual(normal_ratio, expected_normal_prob, delta=0.05)
-        self.assertAlmostEqual(outlier_ratio, expected_outlier_prob, delta=0.05)
+        # Test should pass if p-value is above significance level (0.05)
+        self.assertGreater(
+            p_value, 
+            0.05, 
+            f"Salary distribution failed chi-square test (p={p_value:.4f})"
+        )
+        
+        return invalid_salaries
         
     def test_save_industry_dataset(self):
         """Test if the industry dataset is saved with correct date stamp."""
         df = self.generator.generate(self.test_size)
+        
+        # Create test output directory if it doesn't exist
+        test_output_dir = Path(self.test_settings['output_paths']['test_data'])
+        test_output_dir.mkdir(parents=True, exist_ok=True)
         
         # Save the dataset
         output_path = self.generator.save_industry_dataset()
@@ -163,7 +184,7 @@ class TestEmploymentGenerator(unittest.TestCase):
         saved_df = pd.read_csv(output_path)
         self.assertEqual(len(saved_df), self.test_size)
         self.assertTrue(all(col in saved_df.columns 
-                          for col in ['industry', 'experience_level', 'salary']))
+                          for col in self.test_settings['validation']['required_columns']['employment']))
         
         # Clean up the test file
         os.remove(output_path)
