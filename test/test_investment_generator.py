@@ -16,7 +16,7 @@ class TestInvestmentGenerator(unittest.TestCase):
         """Set up test fixtures before each test method."""
         self.generator = InvestmentGenerator()
         self.test_settings = self.generator.settings['test_settings']
-        np.random.seed(self.test_settings['random_seed'])  # For reproducibility
+        np.random.seed(self.generator.settings['random_seed'])  # Use main random_seed
         self.test_size = self.test_settings['default_test_size']
         
     def test_initialization(self):

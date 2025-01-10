@@ -27,7 +27,7 @@ class EmploymentGenerator(DatasetGenerator):
         # Load settings
         self.settings = self._load_settings()
         
-        # Initialize random state with seed from settings
+        # Use numpy's random state initialized by parent class
         self.rng = np.random.RandomState(self.settings['random_seed'])
         
         # Load industry data

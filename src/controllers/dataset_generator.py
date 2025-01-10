@@ -64,7 +64,6 @@ class DatasetGenerator(ABC):
             'test_settings': {
                 'default_test_size': 100,
                 'large_test_size': 1000,
-                'random_seed': 42,
                 'delta_tolerance': 0.05,
                 'sample_size': {
                     'default': 5,
@@ -95,9 +94,7 @@ class DatasetGenerator(ABC):
         
     def _init_random_state(self) -> None:
         """Initialize random state from settings."""
-        # Try test settings first, then fall back to global random_seed
-        random_seed = (self.settings.get('test_settings', {}).get('random_seed') or 
-                      self.settings.get('random_seed', 42))
+        random_seed = self.settings.get('random_seed', 42)  # Use main random_seed
         np.random.seed(random_seed)
         logger.debug(f"Initialized random state with seed: {random_seed}")
     

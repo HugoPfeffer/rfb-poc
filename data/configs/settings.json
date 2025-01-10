@@ -1,5 +1,5 @@
 {
-    "random_seed": 102,
+    "random_seed": 10,
     "salary_distribution": {
         "normal_range": {
             "probability": 0.85,
@@ -39,7 +39,6 @@
     "test_settings": {
         "default_test_size": 100,
         "large_test_size": 1000,
-        "random_seed": 102,
         "delta_tolerance": 0.05,
         "lifestyle_thresholds": {
             "ratio_threshold": 0.4,
