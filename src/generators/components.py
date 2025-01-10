@@ -112,29 +112,50 @@ class FraudScenarioGenerator:
     """Component for generating fraud scenarios."""
     
     def __init__(self, config: Optional[Dict[str, Any]] = None):
+        """Initialize the fraud scenario generator.
+        
+        Args:
+            config: Optional configuration dictionary
+        """
+        if not hasattr(config_manager, '_config') or config_manager._config is None:
+            config_manager.initialize()
         self.config = config or config_manager.config
-        self.fraud_settings = self.config.get('fraud_scenarios', {})
+        self.fraud_settings = self.config.get('fraud_scenarios')
+        if not self.fraud_settings:
+            raise ValueError("Required fraud_scenarios settings not found in config")
         self.rng = np.random.RandomState(self.config.get('random_seed', 42))
     
     def add_fraud_indicators(self, data: pd.DataFrame) -> pd.DataFrame:
         """Add fraud indicators to the dataset."""
-        data['is_fraudulent'] = pd.Series([False] * len(data), dtype=bool)
-        data['fraud_type'] = pd.Series(['none'] * len(data), dtype=pd.StringDtype())
+        size = len(data)
+        data['is_fraudulent'] = pd.Series([False] * size, dtype=bool)
+        data['fraud_type'] = pd.Series(['none'] * size, dtype=pd.StringDtype())
         
-        # Apply fraud scenarios based on configuration
-        for scenario in self.fraud_settings.get('scenarios', []):
-            mask = self.rng.random(len(data)) < scenario['probability']
-            data.loc[mask, 'is_fraudulent'] = True
-            data.loc[mask, 'fraud_type'] = pd.Series([scenario['type']] * mask.sum(), dtype=pd.StringDtype())
-            
-            # Apply scenario-specific transformations
-            if 'transformations' in scenario:
-                for transform in scenario['transformations']:
-                    if transform['type'] == 'multiply':
-                        data.loc[mask, transform['column']] *= self.rng.uniform(
-                            transform['range'][0],
-                            transform['range'][1],
-                            size=mask.sum()
-                        )
+        # Get fraud probability from settings
+        fraud_prob = self.fraud_settings.get('probability')
+        if fraud_prob is None:
+            raise ValueError("Required fraud_scenarios.probability not found in config")
+        
+        # Generate fraud mask
+        fraud_mask = self.rng.random(size) < fraud_prob
+        data.loc[fraud_mask, 'is_fraudulent'] = True
+        
+        # Get fraud type probabilities from settings
+        fraud_types = ['salary_misreporting', 'suspicious_lifestyle', 'rapid_transactions']
+        fraud_probs = []
+        for fraud_type in fraud_types:
+            prob = self.fraud_settings.get(fraud_type, {}).get('probability')
+            if prob is None:
+                raise ValueError(f"Required fraud_scenarios.{fraud_type}.probability not found in config")
+            fraud_probs.append(prob)
+        
+        # Normalize probabilities
+        total_prob = sum(fraud_probs)
+        norm_probs = [p/total_prob for p in fraud_probs]
+        
+        # Assign fraud types
+        fraud_indices = data[fraud_mask].index
+        assigned_types = self.rng.choice(fraud_types, size=len(fraud_indices), p=norm_probs)
+        data.loc[fraud_indices, 'fraud_type'] = pd.Series(assigned_types, dtype=pd.StringDtype())
         
         return data 

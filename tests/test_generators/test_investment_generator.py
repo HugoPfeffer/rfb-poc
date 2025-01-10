@@ -16,7 +16,7 @@ class TestInvestmentGenerator(unittest.TestCase):
     def setUp(self):
         """Set up test fixtures before each test method."""
         self.generator = InvestmentDataGenerator()
-        self.test_settings = self.generator.settings['test_settings']
+        self.test_settings = self.generator.test_settings
         np.random.seed(self.test_settings['random_seed'])  # For reproducibility
         self.test_size = self.test_settings['default_test_size']
         
@@ -47,7 +47,7 @@ class TestInvestmentGenerator(unittest.TestCase):
         # Verify fraud probabilities are roughly as expected
         self.assertAlmostEqual(
             fraud_counts['none'],
-            1 - sum(self.generator.fraud_probabilities.values()),
+            1 - self.generator.config['fraud_scenarios']['probability'],
             delta=self.test_settings['delta_tolerance']
         )
         

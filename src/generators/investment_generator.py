@@ -30,45 +30,41 @@ class InvestmentDataGenerator(DataComponent):
         self.employment_generator = EmploymentDataGenerator(config)
         
         # Load settings from config
-        self.settings = self.config.get('settings', {})
-        if not self.settings:
-            app_logger.warning("No settings found in config, using defaults")
-            self.settings = {
-                'test_settings': {
-                    'random_seed': 42,
-                    'default_test_size': 100,
-                    'large_test_size': 1000,
-                    'delta_tolerance': 0.05,
-                    'asset_allocation': {
-                        'atol': 1e-4,
-                        'stocks_range': (0.4, 0.8),
-                        'bonds_range': (0.1, 0.4),
-                        'cash_range': (0.05, 0.2),
-                        'real_estate_range': (0, 0.2)
-                    },
-                    'lifestyle_thresholds': {
-                        'ratio_threshold': 0.4,
-                        'luxury_spending_ratio': 0.25
-                    },
-                    'validation': {
-                        'required_columns': {
-                            'investment': [
-                                'industry', 'experience_level', 'salary', 'reported_salary',
-                                'annual_investment', 'stocks', 'bonds', 'cash', 'real_estate',
-                                'expected_annual_return', 'expected_value_1yr',
-                                'luxury_spending', 'travel_spending', 'lifestyle_ratio'
-                            ]
-                        }
-                    }
+        if not hasattr(config_manager, '_config') or config_manager._config is None:
+            config_manager.initialize()
+            
+        self.test_settings = config_manager.config.get('test_settings', {})
+        if not self.test_settings:
+            app_logger.warning("No test settings found in config, using defaults")
+            self.test_settings = {
+                'random_seed': 42,
+                'default_test_size': 100,
+                'large_test_size': 1000,
+                'delta_tolerance': 0.05,
+                'asset_allocation': {
+                    'atol': 1e-4,
+                    'stocks_range': [0.4, 0.8],
+                    'bonds_range': [0.1, 0.4],
+                    'cash_range': [0.05, 0.2],
+                    'real_estate_range': [0.0, 0.2]
+                },
+                'lifestyle_thresholds': {
+                    'ratio_threshold': 0.4,
+                    'luxury_spending_ratio': 0.25
                 }
             }
         
-        # Initialize fraud probabilities
-        self.fraud_probabilities = {
-            'underreported_income': 0.1,
-            'suspicious_lifestyle': 0.05,
-            'rapid_transactions': 0.03
-        }
+        # Initialize fraud probabilities from config
+        fraud_settings = self.config.get('fraud_scenarios', {})
+        if not fraud_settings:
+            raise ValueError("Required fraud_scenarios settings not found in config")
+            
+        self.fraud_probabilities = {}
+        for fraud_type in ['salary_misreporting', 'suspicious_lifestyle', 'rapid_transactions']:
+            prob = fraud_settings.get(fraud_type, {}).get('probability')
+            if prob is None:
+                raise ValueError(f"Required fraud_scenarios.{fraud_type}.probability not found in config")
+            self.fraud_probabilities[fraud_type] = prob
         
         # Initialize validation strategy
         self.validator = DataFrameValidationStrategy(
@@ -76,8 +72,7 @@ class InvestmentDataGenerator(DataComponent):
                 'industry', 'experience_level', 'salary', 'reported_salary',
                 'annual_investment', 'stocks', 'bonds', 'cash', 'real_estate',
                 'expected_annual_return', 'expected_value_1yr',
-                'luxury_spending', 'travel_spending', 'lifestyle_ratio',
-                'is_fraudulent', 'fraud_type', 'suspicious_lifestyle'
+                'luxury_spending', 'travel_spending', 'lifestyle_ratio'
             ],
             column_types={
                 'salary': np.float64,
@@ -98,32 +93,35 @@ class InvestmentDataGenerator(DataComponent):
             }
         )
         
-        # Investment parameters
-        self.investment_rates = {
-            'entry': (0.05, 0.15),
-            'mid': (0.10, 0.25),
-            'senior': (0.15, 0.35)
-        }
+        # Investment parameters from config
+        self.investment_rates = {}
+        for level, settings in self.config['experience_levels'].items():
+            if 'investment_rate' not in settings:
+                raise ValueError(f"Required experience_levels.{level}.investment_rate not found in config")
+            self.investment_rates[level] = tuple(settings['investment_rate'])
         
+        # Asset allocation ranges from config
+        asset_allocation = self.test_settings.get('asset_allocation')
+        if not asset_allocation:
+            raise ValueError("Required test_settings.asset_allocation not found in config")
+            
         self.asset_classes = {
-            'stocks': (0.4, 0.8),
-            'bonds': (0.1, 0.4),
-            'cash': (0.05, 0.2),
-            'real_estate': (0, 0.2)
+            'stocks': tuple(asset_allocation['stocks_range']),
+            'bonds': tuple(asset_allocation['bonds_range']),
+            'cash': tuple(asset_allocation['cash_range']),
+            'real_estate': tuple(asset_allocation['real_estate_range'])
         }
         
+        # Lifestyle indicators from config
         self.lifestyle_indicators = {
-            'luxury_purchases': {
-                'entry': (0, 0.1),      # 0-10% of salary
-                'mid': (0.05, 0.15),    # 5-15% of salary
-                'senior': (0.1, 0.25)   # 10-25% of salary
-            },
-            'travel_expenses': {
-                'entry': (0.02, 0.08),  # 2-8% of salary
-                'mid': (0.05, 0.12),    # 5-12% of salary
-                'senior': (0.08, 0.20)  # 8-20% of salary
-            }
+            'luxury_purchases': {},
+            'travel_expenses': {}
         }
+        for level, settings in self.config['experience_levels'].items():
+            if 'luxury_spending' not in settings or 'travel_spending' not in settings:
+                raise ValueError(f"Required luxury_spending and travel_spending not found in config for {level}")
+            self.lifestyle_indicators['luxury_purchases'][level] = tuple(settings['luxury_spending'])
+            self.lifestyle_indicators['travel_expenses'][level] = tuple(settings['travel_spending'])
     
     @log_execution_time(app_logger)
     @validate_config(['experience_levels', 'fraud_scenarios'])
@@ -188,8 +186,14 @@ class InvestmentDataGenerator(DataComponent):
         return data
     
     def _generate_allocation(self) -> Dict[str, float]:
-        """Generate random asset allocation that sums to 100%."""
+        """Generate random asset allocation that sums to exactly 1.0.
+        
+        Returns:
+            Dict[str, float]: Asset allocation dictionary with keys as asset types
+                             and values as allocation percentages.
+        """
         MAX_ATTEMPTS = 10
+        ATOL = 1e-4  # Absolute tolerance for floating point comparison
         
         for attempt in range(MAX_ATTEMPTS):
             try:
@@ -197,31 +201,38 @@ class InvestmentDataGenerator(DataComponent):
                 remaining = 1.0
                 assets = list(self.asset_classes.items())
                 
-                # Handle all but the last asset
-                for asset, (min_alloc, max_alloc) in assets[:-1]:
-                    # Calculate maximum possible allocation considering remaining assets' minimums
-                    remaining_min_sum = sum(min_a for _, (min_a, _) in assets[assets.index((asset, (min_alloc, max_alloc)))+1:])
-                    max_possible = min(max_alloc, remaining - remaining_min_sum)
+                # Generate initial allocations for all assets
+                for asset, (min_alloc, max_alloc) in assets:
+                    if asset == assets[-1][0]:  # Last asset
+                        alloc = remaining
+                    else:
+                        # Calculate maximum possible allocation considering remaining assets' minimums
+                        remaining_min_sum = sum(min_a for _, (min_a, _) in assets[assets.index((asset, (min_alloc, max_alloc)))+1:])
+                        max_possible = min(max_alloc, remaining - remaining_min_sum)
+                        
+                        if max_possible < min_alloc:
+                            raise ValueError("Cannot satisfy minimum allocation")
+                        
+                        alloc = self.rng.uniform(min_alloc, max_possible)
                     
-                    if max_possible < min_alloc:
-                        raise ValueError("Cannot satisfy minimum allocation")
-                    
-                    # Generate allocation within bounds
-                    alloc = self.rng.uniform(min_alloc, max_possible)
                     allocation[asset] = round(alloc, 4)
                     remaining -= alloc
                 
-                # Handle last asset
-                last_asset, (min_alloc, max_alloc) = assets[-1]
-                if not (min_alloc <= remaining <= max_alloc):
-                    raise ValueError("Invalid remaining allocation for last asset")
+                # Verify all allocations are within bounds
+                for asset, (min_alloc, max_alloc) in assets:
+                    if not (min_alloc - ATOL <= allocation[asset] <= max_alloc + ATOL):
+                        raise ValueError(f"Asset {asset} allocation outside bounds")
                 
-                allocation[last_asset] = round(remaining, 4)
-                
-                # Verify total allocation and bounds
+                # Normalize to ensure exact sum of 1.0
                 total = sum(allocation.values())
-                if not np.isclose(total, 1.0, atol=1e-4):
-                    raise ValueError(f"Total allocation {total} not 100%")
+                if not np.isclose(total, 1.0, atol=ATOL):
+                    # Adjust the largest allocation to make sum exactly 1.0
+                    largest_asset = max(allocation.items(), key=lambda x: x[1])[0]
+                    allocation[largest_asset] = round(allocation[largest_asset] + (1.0 - total), 4)
+                
+                # Final verification
+                if not np.isclose(sum(allocation.values()), 1.0, atol=ATOL):
+                    raise ValueError("Failed to achieve exact sum of 1.0")
                 
                 return allocation
                 

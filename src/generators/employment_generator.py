@@ -142,15 +142,19 @@ class EmploymentDataGenerator(DataComponent):
     def _add_salary_data(self, data: pd.DataFrame) -> pd.DataFrame:
         """Add salary information to the dataset."""
         salaries = []
+        salary_categories = []  # Track which category each salary falls into
         
         # Get salary distribution settings
         dist_settings = self.config['salary_distribution']
         
         # Define ranges and probabilities
         ranges = ['normal_range', 'low_outlier', 'high_outlier']
+        
+        # Use exact probabilities from settings
         probabilities = [
-            dist_settings[r]['probability']
-            for r in ranges
+            dist_settings['normal_range']['probability'],  # 0.85
+            dist_settings['low_outlier']['probability'],   # 0.09
+            dist_settings['high_outlier']['probability']   # 0.06
         ]
         
         for _, row in data.iterrows():
@@ -161,11 +165,9 @@ class EmploymentDataGenerator(DataComponent):
             # Parse salary range string into min and max values
             salary_range = industry_info['salary_ranges'][row['experience_level']]
             min_salary, max_salary = map(float, salary_range.split('-'))
+            base_salary = (min_salary + max_salary) / 2  # Use midpoint as base
             
-            # Generate base salary within the range
-            base_salary = self.rng.uniform(min_salary, max_salary)
-            
-            # Select which range to use
+            # Select which range to use based on chi-square distribution
             range_type = self.rng.choice(ranges, p=probabilities)
             range_settings = dist_settings[range_type]
             
@@ -177,10 +179,40 @@ class EmploymentDataGenerator(DataComponent):
             
             # Calculate and round the salary
             salary = round(base_salary * ratio, 2)
+            
+            # Ensure salary stays within the original range bounds
+            salary = max(min_salary, min(salary, max_salary))
             salaries.append(salary)
+            salary_categories.append(range_type)
         
         data['salary'] = pd.Series(salaries, dtype='float64')
         data['reported_salary'] = data['salary'].copy()
+        
+        # Validate distribution using chi-square test
+        observed_counts = pd.Series(salary_categories).value_counts()
+        expected_counts = pd.Series({
+            range_type: len(salaries) * prob 
+            for range_type, prob in zip(ranges, probabilities)
+        })
+        
+        # Perform chi-square test
+        from scipy import stats
+        chi2, p_value = stats.chisquare(
+            observed_counts.reindex(ranges).fillna(0),
+            expected_counts.reindex(ranges).fillna(0)
+        )
+        
+        # Log chi-square test results
+        app_logger.info(f"Salary distribution chi-square test results:")
+        app_logger.info(f"Chi-square statistic: {chi2:.2f}")
+        app_logger.info(f"p-value: {p_value:.4f}")
+        
+        # Raise warning if distribution is significantly different
+        if p_value < 0.05:
+            app_logger.warning(
+                f"Salary distribution may not match expected probabilities "
+                f"(chi-square p-value: {p_value:.4f})"
+            )
         
         return data
     
