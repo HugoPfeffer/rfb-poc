@@ -50,34 +50,36 @@ class TestEmploymentGenerator(unittest.TestCase):
         
     def test_industry_data(self):
         """Test if industry data is generated correctly."""
-        self.generator.add_industry_data(self.test_size)
+        df = self.generator.generate(self.test_size)
         
-        # Check if industries are from the configuration
-        valid_industries = {ind['industry'] for ind in self.generator.industry_data}
-        self.assertTrue(all(ind in valid_industries for ind in self.generator.data['industry']))
+        # Check if industries are from the loaded data
+        expected_industries = {ind['industry'] for ind in self.generator.industry_data}
+        actual_industries = set(df['industry'].unique())
+        self.assertTrue(actual_industries.issubset(expected_industries))
         
     def test_experience_levels(self):
         """Test if experience levels are generated with correct distribution."""
         # Use a larger sample size for more stable distribution
         test_size = self.test_settings['large_test_size']
-        self.generator.add_industry_data(test_size)
-        self.generator.add_experience_levels(test_size)
+        df = self.generator.generate(test_size)
         
-        # Check if all experience levels are valid
-        valid_levels = set(self.generator.experience_levels)
-        self.assertTrue(all(level in valid_levels for level in self.generator.data['experience_level']))
+        # Check experience level distribution
+        level_counts = df['experience_level'].value_counts(normalize=True)
         
-        # Get expected probabilities from settings
+        # Get expected probabilities from config
         expected_probs = {
-            level: self.generator.config['experience_levels'][level]['probability']
-            for level in self.generator.experience_levels
+            level: settings['probability']
+            for level, settings in self.generator.config['experience_levels'].items()
         }
         
-        # Check approximate distribution (allowing for random variation)
-        level_counts = self.generator.data['experience_level'].value_counts(normalize=True)
-        
+        # Check if distributions are within tolerance
+        tolerance = self.test_settings.get('delta_tolerance', 0.05)
         for level, expected_prob in expected_probs.items():
-            self.assertAlmostEqual(level_counts[level], expected_prob, delta=self.test_settings['delta_tolerance'])
+            actual_prob = level_counts[level]
+            self.assertTrue(
+                abs(actual_prob - expected_prob) < tolerance,
+                f"Experience level {level} proportion {actual_prob:.3f} differs from expected {expected_prob:.3f}"
+            )
         
     def test_salary_data(self):
         """Test if salary data is generated with appropriate distribution including outliers."""

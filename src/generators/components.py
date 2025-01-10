@@ -31,7 +31,9 @@ class DataComponent(ABC):
         else:
             self.config = dict(config)  # Make a copy of the provided config
             
-        self.rng = np.random.RandomState(self.config.get('random_seed', 42))
+        # Initialize random number generator with seed from config
+        seed = self.config.get('random_seed', None)
+        self.rng = np.random.RandomState(seed)
     
     @abstractmethod
     def generate(self, size: int) -> pd.DataFrame:
@@ -123,7 +125,6 @@ class FraudScenarioGenerator:
         self.fraud_settings = self.config.get('fraud_scenarios')
         if not self.fraud_settings:
             raise ValueError("Required fraud_scenarios settings not found in config")
-        self.rng = np.random.RandomState(self.config.get('random_seed', 42))
     
     def add_fraud_indicators(self, data: pd.DataFrame) -> pd.DataFrame:
         """Add fraud indicators to the dataset."""
@@ -136,9 +137,13 @@ class FraudScenarioGenerator:
         if fraud_prob is None:
             raise ValueError("Required fraud_scenarios.probability not found in config")
         
-        # Generate fraud mask
-        fraud_mask = self.rng.random(size) < fraud_prob
-        data.loc[fraud_mask, 'is_fraudulent'] = True
+        # Generate fraud mask using numpy's random generator for exact probability
+        is_fraud = np.random.choice(
+            [True, False],
+            size=size,
+            p=[fraud_prob, 1 - fraud_prob]
+        )
+        data.loc[is_fraud, 'is_fraudulent'] = True
         
         # Get fraud type probabilities from settings
         fraud_types = ['salary_misreporting', 'suspicious_lifestyle', 'rapid_transactions']
@@ -153,9 +158,10 @@ class FraudScenarioGenerator:
         total_prob = sum(fraud_probs)
         norm_probs = [p/total_prob for p in fraud_probs]
         
-        # Assign fraud types
-        fraud_indices = data[fraud_mask].index
-        assigned_types = self.rng.choice(fraud_types, size=len(fraud_indices), p=norm_probs)
-        data.loc[fraud_indices, 'fraud_type'] = pd.Series(assigned_types, dtype=pd.StringDtype())
+        # Assign fraud types only to fraudulent records
+        fraud_indices = data[data['is_fraudulent']].index
+        if len(fraud_indices) > 0:  # Only assign if there are fraudulent records
+            assigned_types = np.random.choice(fraud_types, size=len(fraud_indices), p=norm_probs)
+            data.loc[fraud_indices, 'fraud_type'] = pd.Series(assigned_types, dtype=pd.StringDtype(), index=fraud_indices)
         
         return data 

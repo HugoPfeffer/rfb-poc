@@ -37,7 +37,6 @@ class InvestmentDataGenerator(DataComponent):
         if not self.test_settings:
             app_logger.warning("No test settings found in config, using defaults")
             self.test_settings = {
-                'random_seed': 42,
                 'default_test_size': 100,
                 'large_test_size': 1000,
                 'delta_tolerance': 0.05,
@@ -65,7 +64,7 @@ class InvestmentDataGenerator(DataComponent):
             if prob is None:
                 raise ValueError(f"Required fraud_scenarios.{fraud_type}.probability not found in config")
             self.fraud_probabilities[fraud_type] = prob
-        
+            
         # Initialize validation strategy
         self.validator = DataFrameValidationStrategy(
             required_columns=[
@@ -144,6 +143,9 @@ class InvestmentDataGenerator(DataComponent):
         data = self._add_returns_data(data)
         data = self._add_lifestyle_indicators(data)
         
+        # Add fraud scenarios
+        data = self.fraud_generator.add_fraud_indicators(data)
+        
         # Validate the generated data
         try:
             self.validator.validate(data)
@@ -167,7 +169,7 @@ class InvestmentDataGenerator(DataComponent):
             min_rate, max_rate = self.investment_rates[exp_level]
             
             # Calculate random investment rate within range
-            investment_rate = self.rng.uniform(min_rate, max_rate)
+            investment_rate = np.random.uniform(min_rate, max_rate)
             investment_amount = salary * investment_rate
             investment_amounts.append(round(investment_amount, 2))
         
@@ -213,7 +215,7 @@ class InvestmentDataGenerator(DataComponent):
                         if max_possible < min_alloc:
                             raise ValueError("Cannot satisfy minimum allocation")
                         
-                        alloc = self.rng.uniform(min_alloc, max_possible)
+                        alloc = np.random.uniform(min_alloc, max_possible)
                     
                     allocation[asset] = round(alloc, 4)
                     remaining -= alloc
@@ -243,13 +245,10 @@ class InvestmentDataGenerator(DataComponent):
     
     def _add_returns_data(self, data: pd.DataFrame) -> pd.DataFrame:
         """Add investment returns based on asset allocations."""
-        # Define average annual returns and volatility for each asset class
-        asset_returns = {
-            'stocks': (0.10, 0.15),     # 10% return, 15% volatility
-            'bonds': (0.05, 0.05),      # 5% return, 5% volatility
-            'cash': (0.02, 0.01),       # 2% return, 1% volatility
-            'real_estate': (0.07, 0.10)  # 7% return, 10% volatility
-        }
+        # Get asset returns from config
+        asset_returns = {}
+        for asset, settings in self.config['asset_returns'].items():
+            asset_returns[asset] = (settings['return'], settings['volatility'])
         
         # Calculate portfolio returns
         portfolio_returns = []
@@ -259,7 +258,7 @@ class InvestmentDataGenerator(DataComponent):
             for asset, (avg_return, volatility) in asset_returns.items():
                 allocation = row[asset]
                 # Generate random return with normal distribution
-                asset_return = self.rng.normal(avg_return, volatility)
+                asset_return = np.random.normal(avg_return, volatility)
                 total_return += allocation * asset_return
             
             portfolio_returns.append(round(total_return, 4))
@@ -284,11 +283,11 @@ class InvestmentDataGenerator(DataComponent):
             
             # Generate luxury purchases
             min_lux, max_lux = self.lifestyle_indicators['luxury_purchases'][exp_level]
-            luxury_spending[idx] = round(salary * self.rng.uniform(min_lux, max_lux), 2)
+            luxury_spending[idx] = round(salary * np.random.uniform(min_lux, max_lux), 2)
             
             # Generate travel expenses
             min_travel, max_travel = self.lifestyle_indicators['travel_expenses'][exp_level]
-            travel_spending[idx] = round(salary * self.rng.uniform(min_travel, max_travel), 2)
+            travel_spending[idx] = round(salary * np.random.uniform(min_travel, max_travel), 2)
         
         # Add spending columns
         data['luxury_spending'] = pd.Series(luxury_spending, dtype='float64')

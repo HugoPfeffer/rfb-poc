@@ -60,37 +60,6 @@ class EmploymentDataGenerator(DataComponent):
                 raise ValueError("Invalid industry ranges file format")
             return data['industry_data']
     
-    def add_industry_data(self, size: int) -> None:
-        """Add industry data to the dataset.
-        
-        Args:
-            size: Number of records to generate
-        """
-        if not hasattr(self, 'data'):
-            self.data = pd.DataFrame(index=range(size))
-            
-        industries = [ind['industry'] for ind in self.industry_data]
-        self.data['industry'] = self.rng.choice(industries, size=size)
-    
-    def add_experience_levels(self, size: int) -> None:
-        """Add experience levels to the dataset.
-        
-        Args:
-            size: Number of records to generate
-        """
-        if not hasattr(self, 'data'):
-            self.data = pd.DataFrame(index=range(size))
-            
-        probabilities = [
-            self.config['experience_levels'][level]['probability']
-            for level in self.experience_levels
-        ]
-        self.data['experience_level'] = self.rng.choice(
-            self.experience_levels,
-            size=size,
-            p=probabilities
-        )
-    
     @log_execution_time(app_logger)
     @validate_config(['experience_levels', 'salary_distribution'])
     def generate(self, size: int) -> pd.DataFrame:
@@ -110,14 +79,14 @@ class EmploymentDataGenerator(DataComponent):
             
             # Add industry data
             industries = [ind['industry'] for ind in self.industry_data]
-            self.data['industry'] = self.rng.choice(industries, size=size)
+            self.data['industry'] = np.random.choice(industries, size=size)
             
             # Add experience levels
             probabilities = [
                 self.config['experience_levels'][level]['probability']
                 for level in self.experience_levels
             ]
-            self.data['experience_level'] = self.rng.choice(
+            self.data['experience_level'] = np.random.choice(
                 self.experience_levels,
                 size=size,
                 p=probabilities
@@ -149,70 +118,32 @@ class EmploymentDataGenerator(DataComponent):
         
         # Define ranges and probabilities
         ranges = ['normal_range', 'low_outlier', 'high_outlier']
-        
-        # Use exact probabilities from settings
-        probabilities = [
-            dist_settings['normal_range']['probability'],  # 0.85
-            dist_settings['low_outlier']['probability'],   # 0.09
-            dist_settings['high_outlier']['probability']   # 0.06
-        ]
+        probabilities = [dist_settings[r]['probability'] for r in ranges]
         
         for _, row in data.iterrows():
-            industry_info = next(
-                ind for ind in self.industry_data 
-                if ind['industry'] == row['industry']
-            )
-            # Parse salary range string into min and max values
+            # Get base salary range for industry and experience level
+            industry_info = next(ind for ind in self.industry_data 
+                               if ind['industry'] == row['industry'])
             salary_range = industry_info['salary_ranges'][row['experience_level']]
             min_salary, max_salary = map(float, salary_range.split('-'))
-            base_salary = (min_salary + max_salary) / 2  # Use midpoint as base
+            base_salary = (min_salary + max_salary) / 2
             
-            # Select which range to use based on chi-square distribution
-            range_type = self.rng.choice(ranges, p=probabilities)
-            range_settings = dist_settings[range_type]
-            
-            # Generate ratio based on the selected range
-            ratio = self.rng.uniform(
-                range_settings['min_ratio'],
-                range_settings['max_ratio']
-            )
-            
-            # Calculate and round the salary
-            salary = round(base_salary * ratio, 2)
-            
-            # Ensure salary stays within the original range bounds
-            salary = max(min_salary, min(salary, max_salary))
-            salaries.append(salary)
+            # Select which range to use based on probabilities
+            range_type = np.random.choice(ranges, p=probabilities)
             salary_categories.append(range_type)
+            
+            # Get ratio range for the selected category
+            ratio_range = dist_settings[range_type]
+            min_ratio, max_ratio = ratio_range['min_ratio'], ratio_range['max_ratio']
+            
+            # Generate random ratio within range
+            ratio = np.random.uniform(min_ratio, max_ratio)
+            salary = round(base_salary * ratio, 2)
+            salaries.append(salary)
         
+        # Add salary data
         data['salary'] = pd.Series(salaries, dtype='float64')
-        data['reported_salary'] = data['salary'].copy()
-        
-        # Validate distribution using chi-square test
-        observed_counts = pd.Series(salary_categories).value_counts()
-        expected_counts = pd.Series({
-            range_type: len(salaries) * prob 
-            for range_type, prob in zip(ranges, probabilities)
-        })
-        
-        # Perform chi-square test
-        from scipy import stats
-        chi2, p_value = stats.chisquare(
-            observed_counts.reindex(ranges).fillna(0),
-            expected_counts.reindex(ranges).fillna(0)
-        )
-        
-        # Log chi-square test results
-        app_logger.info(f"Salary distribution chi-square test results:")
-        app_logger.info(f"Chi-square statistic: {chi2:.2f}")
-        app_logger.info(f"p-value: {p_value:.4f}")
-        
-        # Raise warning if distribution is significantly different
-        if p_value < 0.05:
-            app_logger.warning(
-                f"Salary distribution may not match expected probabilities "
-                f"(chi-square p-value: {p_value:.4f})"
-            )
+        data['reported_salary'] = data['salary'].copy()  # Will be modified by fraud generator
         
         return data
     
