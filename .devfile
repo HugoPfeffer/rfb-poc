@@ -13,7 +13,6 @@ components:
   - name: python
     container:
       image: python:3.11
-      memoryLimit: 4Gi
       mountSources: true
       endpoints:
         - name: jupyter
@@ -63,4 +62,3 @@ commands:
 
 volumes:
   - name: venv
-    size: 2Gi
