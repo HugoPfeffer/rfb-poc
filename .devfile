@@ -1,0 +1,66 @@
+schemaVersion: 2.2.0
+metadata:
+  name: python-data-science
+  version: 1.0.0
+  displayName: Python Data Science Environment
+  description: Python 3.11 environment with scientific and machine learning libraries
+  tags:
+    - python
+    - data-science
+    - machine-learning
+
+components:
+  - name: python
+    container:
+      image: python:3.11
+      memoryLimit: 4Gi
+      mountSources: true
+      endpoints:
+        - name: jupyter
+          exposure: public
+          protocol: http
+          targetPort: 8888
+        - name: vscode
+          exposure: public
+          protocol: http
+          targetPort: 3000
+      volumeMounts:
+        - name: venv
+          path: /home/user/.venv
+      env:
+        - name: JUPYTER_TOKEN
+          value: "dev-workspace"
+        - name: PYTHONPATH
+          value: ${PROJECT_SOURCE}
+
+commands:
+  - id: setup-environment
+    exec:
+      component: python
+      commandLine: |
+        python -m venv /home/user/.venv
+        source /home/user/.venv/bin/activate
+        pip install --upgrade pip
+        pip install scikit-learn matplotlib pandas sdv pytorch numpy jupyter notebook
+        # Install VS Code server
+        curl -fsSL https://code-server.dev/install.sh | sh
+        # Start both Jupyter and VS Code server
+        code-server --auth none --bind-addr 0.0.0.0:3000 & 
+        jupyter notebook --ip=0.0.0.0 --port=8888 --NotebookApp.token='dev-workspace' --allow-root --no-browser
+      workingDir: ${PROJECT_SOURCE}
+      group:
+        kind: build
+        isDefault: true
+
+  - id: run-python
+    exec:
+      component: python
+      commandLine: python ${FILE}
+      workingDir: ${PROJECT_SOURCE}
+      group:
+        kind: run
+        isDefault: true
+
+volumes:
+  - name: venv
+    size: 2Gi
