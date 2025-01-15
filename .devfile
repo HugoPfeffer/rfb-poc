@@ -1,6 +1,6 @@
 schemaVersion: 2.2.0
 metadata:
-  name: python-data-science
+  name: gen-synth-data
   version: 1.0.0
   displayName: Python Data Science Environment
   description: Python 3.11 environment with scientific and machine learning libraries
@@ -10,10 +10,11 @@ metadata:
     - machine-learning
 
 components:
-  - name: python
+  - name: universal-developer-image
     container:
-      image: python:3.11
+      image: quay.io/devfile/universal-developer-image:ubi8-d071837
       mountSources: true
+      sourceMapping: /projects
       endpoints:
         - name: jupyter
           exposure: public
@@ -32,10 +33,18 @@ components:
         - name: PYTHONPATH
           value: ${PROJECT_SOURCE}
 
+projects:
+  - name: gen-synth-data
+    git:
+      remotes:
+        origin: https://github.com/poc-rhoai-gov/gen-synth-data.git
+      checkoutFrom:
+        revision: devspaces
+
 commands:
   - id: setup-environment
     exec:
-      component: python
+      component: universal-developer-image
       commandLine: |
         python -m venv /home/user/.venv
         source /home/user/.venv/bin/activate
@@ -53,7 +62,7 @@ commands:
 
   - id: run-python
     exec:
-      component: python
+      component: universal-developer-image
       commandLine: python ${FILE}
       workingDir: ${PROJECT_SOURCE}
       group:
