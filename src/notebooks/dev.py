@@ -11,15 +11,11 @@ loader = DataLoader()
 processor = DataFrameProcessor()
 
 # %%
-all_df_dict = loader.load_all_csvs()
+# Load all CSVs into dictionary
+df_raw = loader.load_single_csv("dividas_e_onus.csv")
+df = processor.normalize_columns(df_raw)
 
 # %%
-all_df_dict.keys()
+df
 
 # %%
-bens_e_direitos_df = all_df_dict["dividas_e_onus.csv"]
-bens_e_direitos_df = processor.normalize_columns(bens_e_direitos_df)
-
-
-# %%
-bens_e_direitos_df.head()
