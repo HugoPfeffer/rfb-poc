@@ -1,3 +1,0 @@
-"""
-Core classes package.
-""" 
