@@ -1,6 +1,6 @@
 import pandas as pd
 from pathlib import Path
-from typing import Dict
+from typing import Dict, List
 
 class DataLoader:
     def __init__(self):
@@ -25,12 +25,8 @@ class DataLoader:
             print(f"Warning: Error detecting delimiter: {e}")
             return ','
     
-    def load_single_csv(self, filename: str, encoding: str = 'utf-8', delimiter: str = None) -> pd.DataFrame:
-        """Load a single CSV file by filename with automatic delimiter detection."""
-        file_path = self.data_dir / filename
-        if not file_path.exists():
-            raise FileNotFoundError(f"CSV file not found: {file_path}")
-            
+    def _load_csv_file(self, file_path: Path, encoding: str = 'utf-8', delimiter: str = None) -> pd.DataFrame:
+        """Internal method to load a CSV file with error handling."""
         if delimiter is None:
             delimiter = self._detect_delimiter(file_path)
             
@@ -52,3 +48,49 @@ class DataLoader:
                     
                     return pd.DataFrame([line.split(delimiter) for line in lines[1:]], 
                                       columns=lines[0].split(delimiter))
+    
+    def load_single_csv(self, filename: str, encoding: str = 'utf-8', delimiter: str = None) -> pd.DataFrame:
+        """Load a single CSV file by filename with automatic delimiter detection."""
+        file_path = self.data_dir / filename
+        if not file_path.exists():
+            raise FileNotFoundError(f"CSV file not found: {file_path}")
+            
+        return self._load_csv_file(file_path, encoding, delimiter)
+    
+    def load_selected_csvs(self, filenames: List[str], encoding: str = 'utf-8', 
+                          delimiter: str = None) -> Dict[str, pd.DataFrame]:
+        """Load multiple selected CSV files.
+        
+        Args:
+            filenames: List of CSV filenames to load
+            encoding: File encoding to use
+            delimiter: Optional delimiter to use. If None, will detect automatically
+            
+        Returns:
+            Dictionary mapping filenames to their DataFrames
+        """
+        results = {}
+        for filename in filenames:
+            try:
+                df = self.load_single_csv(filename, encoding, delimiter)
+                results[filename] = df
+            except Exception as e:
+                print(f"Warning: Failed to load {filename}: {e}")
+        return results
+    
+    def load_all_csvs(self, encoding: str = 'utf-8', delimiter: str = None) -> Dict[str, pd.DataFrame]:
+        """Load all CSV files from the data directory.
+        
+        Args:
+            encoding: File encoding to use
+            delimiter: Optional delimiter to use. If None, will detect automatically
+            
+        Returns:
+            Dictionary mapping filenames to their DataFrames
+        """
+        csv_files = [f.name for f in self.data_dir.glob("*.csv")]
+        if not csv_files:
+            print(f"Warning: No CSV files found in {self.data_dir}")
+            return {}
+            
+        return self.load_selected_csvs(csv_files, encoding, delimiter)
