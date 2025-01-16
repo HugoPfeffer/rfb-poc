@@ -1,7 +1,7 @@
 .cursorrules
 .cursorignore
 NOTES_DEV.md
-
+.pytest_cache/
 
 # Python virtual environment
 venv/
