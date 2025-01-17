@@ -2,6 +2,9 @@
 from load_path import *
 from classes.data_loader import DataLoader
 from classes.process_dataframe import DataFrameProcessor
+from sdv.single_table import CTGANSynthesizer
+import json
+from pathlib import Path
 
 
 # %%
@@ -10,12 +13,27 @@ loader = DataLoader()
 processor = DataFrameProcessor()
 
 # %%
-# Load raw data
-df_raw = loader.load_single_csv("dividas_e_onus.csv")
+# Load metadata
+metadata_path = Path(__file__).parent.parent / "config" / "ctgan_metadata" / "dividas_e_onus.json"
+with open(metadata_path, 'r') as f:
+    metadata = json.load(f)
 
 # %%
-# Process the DataFrame
-df = processor.normalize_columns(df_raw)
+# Initialize CTGAN with metadata
+synthesizer = CTGANSynthesizer(
+    metadata.get('sdtypes'),
+    enforce_min_max_values=True,
+    enforce_rounding=True,
+    epochs=1000
+)
+
+# %%
+# Set NA handling
+processor.set_fill_na(True)
+
+# %%
+# Load raw data
+df_raw = loader.load_single_csv("dividas_e_onus.csv")
 
 # %%
 # Get normalized column names
@@ -43,6 +61,14 @@ column_dtypes = {
 processor.set_column_dtypes(column_dtypes)
 
 # %%
+# Process the DataFrame with types
+df = processor.normalize_columns(df_raw)
+
+# %%
 # Check data types of all columns
 print("\nDataframe dtypes:")
 df.info()
+
+# %%
+df
+# %%

@@ -8,6 +8,15 @@ class DataFrameProcessor:
         """Initialize DataFrameProcessor."""
         self.original_columns: Dict[str, str] = {}  # original_name -> normalized_name
         self.column_dtypes: Dict[str, str] = {}
+        self.fill_na: bool = True  # Default to filling NA values
+    
+    def set_fill_na(self, fill_na: bool) -> None:
+        """Set whether to fill NA values with 0 for numeric columns.
+        
+        Args:
+            fill_na (bool): If True, fill NA values with 0 for numeric columns
+        """
+        self.fill_na = fill_na
     
     def get_columns(self, df: pd.DataFrame, normalized: bool = True) -> List[str]:
         """Get list of column names from DataFrame.
@@ -96,6 +105,9 @@ class DataFrameProcessor:
         # For numeric types, convert Brazilian number format first
         if dtype in ['float64', 'float32', 'int64', 'int32']:
             series = series.apply(self._convert_numeric_value)
+            # Fill NA values with 0 if enabled
+            if self.fill_na:
+                series = series.fillna(0)
         
         # Convert to specified type
         return series.astype(dtype)
