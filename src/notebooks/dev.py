@@ -3,6 +3,7 @@ from load_path import *
 from classes.data_loader import DataLoader
 from classes.process_dataframe import DataFrameProcessor
 from sdv.single_table import CTGANSynthesizer
+from sdv.metadata import SingleTableMetadata
 import json
 from pathlib import Path
 
@@ -19,9 +20,15 @@ with open(metadata_path, 'r') as f:
     metadata = json.load(f)
 
 # %%
+# Create SingleTableMetadata
+table_metadata = SingleTableMetadata()
+for column, sdtype in metadata['sdtypes'].items():
+    table_metadata.add_column(column_name=column, sdtype=sdtype)
+
+# %%
 # Initialize CTGAN with metadata
 synthesizer = CTGANSynthesizer(
-    metadata.get('sdtypes'),
+    table_metadata,
     enforce_min_max_values=True,
     enforce_rounding=True,
     epochs=1000
@@ -70,5 +77,17 @@ print("\nDataframe dtypes:")
 df.info()
 
 # %%
-df
+print("Training CTGAN model...")
+synthesizer.fit(df)
+
+# %%
+print("Training complete!")
+# %%
+# Generate 100 synthetic samples
+synthetic_data = synthesizer.sample(num_rows=100)
+
+# Display first few rows of synthetic data
+print("\nFirst few rows of synthetic data:")
+synthetic_data
+
 # %%
