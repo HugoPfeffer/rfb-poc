@@ -4,3 +4,4 @@ scikit-learn
 Faker
 faker-datasets
 sdv
+nbformat

@@ -90,7 +90,13 @@
             "description": "Invalid debts and real burdens declared",
             "constraints": {
                 "min": 0,
-                "positive_only": true
+                "max": 100,
+                "positive_only": true,
+                "distribution": "gamma",
+                "distribution_parameters": {
+                    "shape": 0.5,
+                    "scale": 35.0
+                }
             }
         }
     },

@@ -6,6 +6,11 @@ from sdv.single_table import CTGANSynthesizer
 from sdv.metadata import SingleTableMetadata
 import json
 from pathlib import Path
+from sdv.evaluation.single_table import run_diagnostic
+from sdv.evaluation.single_table import evaluate_quality
+from sdv.evaluation.single_table import get_column_plot
+
+
 
 
 # %%
@@ -84,10 +89,39 @@ synthesizer.fit(df)
 print("Training complete!")
 # %%
 # Generate 100 synthetic samples
-synthetic_data = synthesizer.sample(num_rows=100)
+synthetic_data = synthesizer.sample(num_rows=1000)
 
+
+
+# %%
 # Display first few rows of synthetic data
 print("\nFirst few rows of synthetic data:")
 synthetic_data
+# %%
+diagnostic_report = run_diagnostic(
+    real_data=df,
+    synthetic_data=synthetic_data,
+    metadata=table_metadata)
 
+# %%
+diagnostic_report.get_details(property_name='Data Validity')
+
+# %%
+quality_report = evaluate_quality(
+    real_data=df,
+    synthetic_data=synthetic_data,
+    metadata=table_metadata)
+
+# %%
+quality_report.get_details(property_name='Column Shapes')
+
+# %%
+fig = get_column_plot(
+    real_data=df,
+    synthetic_data=synthetic_data,
+    metadata=table_metadata,
+    column_name='ano_calendario'
+)
+    
+fig.show()
 # %%
