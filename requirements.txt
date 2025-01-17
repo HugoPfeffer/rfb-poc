@@ -1,5 +1,5 @@
-numpy>=1.24.0
-pandas>=2.0.0
-scikit-learn>=1.3.0
-Faker>=19.0.0
-faker-datasets>=1.0.0 
+numpy>=1.26.4
+pandas>=2.2.0
+scikit-learn>=1.4.0
+Faker>=22.6.0
+faker-datasets>=0.1.0
