@@ -1,17 +1,29 @@
 import pandas as pd
 import unicodedata
 import re
-from typing import Dict, Union, Optional
+from typing import Dict, Union, Optional, List
 
 class DataFrameProcessor:
-    def __init__(self, column_dtypes: Optional[Dict[str, str]] = None):
-        """Initialize DataFrameProcessor.
+    def __init__(self):
+        """Initialize DataFrameProcessor."""
+        self.original_columns: Dict[str, str] = {}  # original_name -> normalized_name
+        self.column_dtypes: Dict[str, str] = {}
+    
+    def get_columns(self, df: pd.DataFrame, normalized: bool = True) -> List[str]:
+        """Get list of column names from DataFrame.
         
         Args:
-            column_dtypes (Optional[Dict[str, str]]): Dictionary mapping column names to their desired data types.
+            df (pd.DataFrame): Input DataFrame
+            normalized (bool): If True, return normalized column names.
+                             If False, return original column names.
+                             Defaults to True.
+        
+        Returns:
+            List[str]: List of column names
         """
-        self.original_columns: Dict[str, str] = {}  # original_name -> normalized_name
-        self.column_dtypes = column_dtypes or {}
+        if normalized:
+            return [self._normalize_column_name(col) for col in df.columns]
+        return list(df.columns)
     
     def set_column_dtypes(self, column_dtypes: Dict[str, str]) -> None:
         """Update the column data types mapping.

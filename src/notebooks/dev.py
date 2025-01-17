@@ -5,10 +5,30 @@ from classes.process_dataframe import DataFrameProcessor
 
 
 # %%
-# Initialize DataLoader
+# Initialize DataLoader and DataFrameProcessor
 loader = DataLoader()
+processor = DataFrameProcessor()
 
-# Initialize DataFrameProcessor with column data types
+# %%
+# Load raw data
+df_raw = loader.load_single_csv("dividas_e_onus.csv")
+
+# %%
+# Process the DataFrame
+df = processor.normalize_columns(df_raw)
+
+# %%
+# Get normalized column names
+normalized_cols = processor.get_columns(df_raw)
+print("Normalized columns:", normalized_cols)
+
+# %%
+# Get original column names
+original_cols = processor.get_columns(df_raw, normalized=False)
+print("Original columns:", original_cols)
+
+# %%
+# Set up column data types
 column_dtypes = {
     'ano_calendario': 'float64',
     'emprestimos_contraidos_no_exterior': 'float64',
@@ -20,22 +40,9 @@ column_dtypes = {
     'outros': 'float64',
     'invalido': 'float64'
 }
-processor = DataFrameProcessor(column_dtypes=column_dtypes)
-
-# %%
-# Load and process CSV
-df_raw = loader.load_single_csv("dividas_e_onus.csv")
-df = processor.normalize_columns(df_raw)
-
-# %%
-df
+processor.set_column_dtypes(column_dtypes)
 
 # %%
 # Check data types of all columns
 print("\nDataframe dtypes:")
 df.info()
-
-# %%
-print(df)
-
-# %%
