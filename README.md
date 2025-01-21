@@ -1,1 +1,1 @@
-# Refactor Project
+Init README for OpenShift Demo
