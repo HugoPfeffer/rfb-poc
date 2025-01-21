@@ -1,9 +1,9 @@
 apiVersion: scaffolder.backstage.io/v1beta3
 kind: Template
 metadata:
-  name: chatbot-self-hosted-llm-template
-  title: Secured Chatbot with a Self-Hosted Large Language Model (LLM)
-  description: Creates a secured quarkus application chatbot provisioning and inferencing a self-hosted LLM
+  name: self-hosted-pred-model
+  title: Predictive model for flaging vehicle license plates that cross red light
+  description: model saves flagged plates into a database for future EDA or modeling using this data
   tags:
     - recommended
     - python
@@ -22,29 +22,29 @@ spec:
           title: Name
           type: string
           description: Unique name of the component
-          default: chatbot-app
+          default: redlight-model
           ui:field: EntityNamePicker
           maxLength: 12
-        group_id:
-          title: Group Id
-          type: string
-          default: redhat.janus
-          description: Maven Group Id
-        artifact_id:
-          title: Artifact Id
-          type: string
-          default: chatbot-app
-          description: Maven Artifact Id
-        java_package_name:
-          title: Java Package Name
-          default: org.redhat.janus
-          type: string
-          description: Name for the java package. eg (com.redhat.blah)
+#        group_id:
+#          title: Group Id
+#          type: string
+#          default: redhat.janus
+#          description: Maven Group Id
+#        artifact_id:
+#          title: Artifact Id
+#          type: string
+#          default: chatbot-app
+#          description: Maven Artifact Id
+#        java_package_name:
+#          title: Java Package Name
+#          default: org.redhat.janus
+#          type: string
+#          description: Name for the java package. eg (com.redhat.blah)
         description:
           title: Description
           type: string
           description: Help others understand what this website is for.
-          default: A cool quarkus chatbot app
+          default: A predictive model for flagging vehicles that cross red lights
     - title: Large Language Model
       required:
         - model_name
@@ -119,7 +119,7 @@ spec:
             verify_commits:
               title: Verify Commits
               type: string
-              description: Verify Git repository commits using Red Hat’s Trusted Artifact Signer (TAS) service
+              description: Verify Git repository commits using Red Hat's Trusted Artifact Signer (TAS) service
               default: disabled
               enum:
                 - enabled
@@ -137,9 +137,9 @@ spec:
           component_id: {{ '${{ parameters.component_id }}' }}
           description: {{ '${{ parameters.description }}' }}
           namespace: {{ '${{ parameters.component_id }}' }}-dev
-          group_id: {{ '${{ parameters.group_id }}' }}
-          artifact_id: {{ '${{ parameters.artifact_id }}' }}
-          java_package_name: {{ '${{ parameters.java_package_name }}' }}
+#          group_id: {{ '${{ parameters.group_id }}' }}
+#          artifact_id: {{ '${{ parameters.artifact_id }}' }}
+#          java_package_name: {{ '${{ parameters.java_package_name }}' }}
           owner: {{ '${{ user.entity.metadata.name }}' }}
           cluster: {{ cluster_subdomain }}
           host: {{ '${{ parameters.repo.host }}' }}
