@@ -1,15 +1,19 @@
 schemaVersion: 2.2.0
 metadata:
-  generateName: ${{values.artifact_id}}
+  generateName: ${{values.artifact_id}} 
 components:
   - name: development-tooling
     container:
-      image: quay.io/devfile/universal-developer-image:ubi8-8fca167
+      image: quay.io/devfile/universal-developer-image:ubi9-latest
       env:
-        - name: QUARKUS_HTTP_HOST
-          value: 0.0.0.0
-        - name: MAVEN_OPTS
-          value: "-Dmaven.repo.local=/home/user/.m2/repository"
+        - name: PYTHONPATH
+          value: "${PROJECT_SOURCE}"
+        - name: PYTHON_HTTP_HOST 
+          value: "0.0.0.0"
+        - name: VIRTUAL_ENV
+          value: "/home/user/.venv"
+        - name: PATH
+          value: "/home/user/.venv/bin:${PATH}"
       memoryLimit: 5Gi
       cpuLimit: 2500m
       volumeMounts:
@@ -20,7 +24,7 @@ components:
           path: /projects/home
 {%- endif %}
       endpoints:
-        - name: quarkus-dev
+        - name: pred-model-dev
           targetPort: 8080
           exposure: public
           secure: false
