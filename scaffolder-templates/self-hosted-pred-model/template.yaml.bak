@@ -24,12 +24,44 @@ spec:
           description: Unique name of the component
           default: redlight-model
           ui:field: EntityNamePicker
-          maxLength: 30
+          maxLength: 12
+#        group_id:
+#          title: Group Id
+#          type: string
+#          default: redhat.janus
+#          description: Maven Group Id
+#        artifact_id:
+#          title: Artifact Id
+#          type: string
+#          default: chatbot-app
+#          description: Maven Artifact Id
+#        java_package_name:
+#          title: Java Package Name
+#          default: org.redhat.janus
+#          type: string
+#          description: Name for the java package. eg (com.redhat.blah)
         description:
           title: Description
           type: string
           description: Help others understand what this website is for.
           default: A predictive model for flagging vehicles that cross red lights
+    - title: Large Language Model
+      required:
+        - model_name
+        - model_max_length
+      properties:
+        model_name:
+          title: Model Name
+          type: string
+          enum:
+            - mistral-7b-instruct-v03
+            - parasol-instruct
+            - granite-30-8b-instruct
+        model_max_length:
+          title: Max model length
+          default: "4096"
+          type: string
+          description: The maximum length for this model
     - title: Provide Image Registry Information
       required:
         - image_registry
@@ -51,18 +83,12 @@ spec:
                   title: Image Host
                   type: string
                   description: Host for storing image
-                  default: quay.io
-                  enum
-                  - {{ quay_host }}
-                  - quay.io
+                  default: {{ quay_host }}
                 image_organization:
                   title: Organization
                   type: string
                   description: Name of the Quay Organization
-                  default: poc-rhoai-gov
-                  enum:
-                    - poc-rhoai-gov
-                    - quayadmin
+                  default: quayadmin
                 image_tag:
                   title: Image Tag
                   default: latest
@@ -80,19 +106,24 @@ spec:
               title: Repo Host
               type: string
               description: Your SCM host
-              default: github.com
+              default: {{ gitlab_host }}
               enum:
-                - github.com
                 - {{ gitlab_host }}
             owner:
               title: Repo Owner
               type: string
               description: Your SCM host organization/group
-              default: hpfeffer
+              default: {{ gitlab_destination_group }}
               enum:
-                - hpfeffer
                 - {{ gitlab_destination_group }}
-
+            verify_commits:
+              title: Verify Commits
+              type: string
+              description: Verify Git repository commits using Red Hat's Trusted Artifact Signer (TAS) service
+              default: disabled
+              enum:
+                - enabled
+                - disabled
 
   steps:
     - id: template
@@ -106,19 +137,25 @@ spec:
           component_id: {{ '${{ parameters.component_id }}' }}
           description: {{ '${{ parameters.description }}' }}
           namespace: {{ '${{ parameters.component_id }}' }}-dev
+#          group_id: {{ '${{ parameters.group_id }}' }}
+#          artifact_id: {{ '${{ parameters.artifact_id }}' }}
+#          java_package_name: {{ '${{ parameters.java_package_name }}' }}
           owner: {{ '${{ user.entity.metadata.name }}' }}
           cluster: {{ cluster_subdomain }}
           host: {{ '${{ parameters.repo.host }}' }}
           destination: {{ '${{ parameters.repo.owner }}' }}/{{ '${{ parameters.component_id }}' }}
           quay_destination: {{ '${{ parameters.image_organization}}' }}/{{ '${{ parameters.component_id }}' }}
           port: 8080
+          verify_commits: {{ '${{ parameters.repo.verify_commits }}' }}
+          model_name: {{ '${{ parameters.model_name }}' }}
+          model_max_length: {{ '${{ parameters.model_max_length }}' }}
 
     - id: publish
       name: Publish
       action: publish:gitlab
       input:
         repoUrl: "{{ '${{ parameters.repo.host }}' }}?owner={{ '${{ parameters.repo.owner }}' }}&repo={{ '${{parameters.component_id}}' }}"
-        repoVisibility: public # TODO: make private support
+        repoVisibility: public
 
     - id: register
       name: Register
@@ -164,7 +201,7 @@ spec:
         title: gitops resources for {{ '${{ parameters.component_id }}' }}
         description: gitops resources for {{ '${{ parameters.component_id }}' }}
         sourcePath: ./tenant-gitops
-        repoVisibility: public # adjust to support private
+        repoVisibility: public
 
     - id: create-argocd-resources
       name: Create ArgoCD Resources
