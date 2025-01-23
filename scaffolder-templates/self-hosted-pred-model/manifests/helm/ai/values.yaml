@@ -3,9 +3,6 @@ app:
   namespace: ${{values.component_id}}-ai
   cluster: ${{values.cluster}}
   user: ${{values.user}}
-  model:
-    name: ${{values.model_name}}
-    maxLength: ${{values.model_max_length}}
   workbench:
     name: 'my-workbench'
     image: pytorch:2024.1
