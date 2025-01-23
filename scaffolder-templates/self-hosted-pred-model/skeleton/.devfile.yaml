@@ -16,43 +16,40 @@ components:
           value: "/home/user/.venv/bin:${PATH}"
       memoryLimit: 5Gi
       cpuLimit: 2500m
-      volumeMounts:
-        - name: m2
-          path: /home/user/.m2
       endpoints:
         - name: pred-model-dev
           targetPort: 8080
           exposure: public
           secure: false
-          protocol: https
+          protocol: http
           path: /
         - name: debug
-          targetPort: 5005
+          targetPort: 5678
           exposure: none
           secure: false
           protocol: tcp
-        - name: tests
-          targetPort: 8081
-          exposure: none
-          secure: false
-          protocol: tcp
-  - name: m2
-    volume:
-      size: 1G
 commands:
-  - id: package
+  - id: install-dependencies
     exec:
-      label: "1. Package the application"
+      label: "1. Install Python dependencies"
       component: development-tooling
-      commandLine: "./mvnw package"
+      commandLine: "python -m venv .venv && . .venv/bin/activate && if [ -f requirements.txt ]; then pip install -r requirements.txt; else echo 'No requirements.txt found. Please create one first.'; fi"
       group:
         kind: build
         isDefault: true
   - id: start-dev
     exec:
-      label: "2. Start Development mode (Hot reload + debug)"
+      label: "2. Start Development server"
       component: development-tooling
-      commandLine: "./mvnw compile quarkus:dev"
+      commandLine: "if [ -f app.py ]; then python app.py; else echo 'No app.py found. Please create your application entry point first.'; fi"
       group:
         kind: run
+        isDefault: true
+  - id: debug
+    exec:
+      label: "3. Start Development server with debugger"
+      component: development-tooling
+      commandLine: "if [ -f app.py ]; then python -m debugpy --listen 0.0.0.0:5678 app.py; else echo 'No app.py found. Please create your application entry point first.'; fi"
+      group:
+        kind: debug
         isDefault: true
